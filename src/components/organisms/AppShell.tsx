@@ -146,6 +146,7 @@ export function AppShell({ activeKey, children, onSelect, onLogout, user }: AppS
             <div className="topbar-title">Distribution Control Center</div>
             <div className="topbar-subtitle">Operations, finance and logistics</div>
           </div>
+          {/* Header page-navigation truck animation is intentionally disabled. */}
           <div className="topbar-actions">
             <Button danger icon={<LogoutOutlined />} onClick={onLogout}>
               Logout

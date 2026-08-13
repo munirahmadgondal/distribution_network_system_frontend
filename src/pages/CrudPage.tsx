@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import { canAccess, deleteData, getData, getStoredUser, patchData, postData } from '../services/api';
 import type { DataRecord } from '../types/table';
+import { ALL_ROWS_PAGE_SIZE } from '../utils/tablePagination';
 
 const { Title, Text } = Typography;
 interface TableInfo { table: string; module: string; title: string; category: 'configuration' | 'transaction' | 'accounts' | 'hr' }
@@ -115,6 +116,7 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
   const [editing, setEditing] = useState<DataRecord | null>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
   const [relationOptions, setRelationOptions] = useState<Record<string, SelectOption[]>>({});
   const [destinationPlantOptions, setDestinationPlantOptions] = useState<SelectOption[]>([]);
@@ -232,11 +234,11 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
     setSearch('');
   }, [initialTable]);
 
-  async function loadRows(table = activeTable, requestedPage = page, query = search) {
+  async function loadRows(table = activeTable, requestedPage = page, query = search, requestedPageSize = pageSize) {
     if (!table) return;
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page: String(requestedPage), limit: '20' });
+      const params = new URLSearchParams({ page: String(requestedPage), limit: String(requestedPageSize) });
       if (query.trim()) params.set('search', query.trim());
       const data = await getData<CrudResponse>(`/crud/${table}?${params}`);
       setRows(data.rows); setTotal(data.total);
@@ -247,12 +249,12 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
 
   useEffect(() => {
     if (!activeTable) return;
-    setPage(1); setMeta(undefined); setRelationOptions({});
+    setPage(1); setPageSize(10); setMeta(undefined); setRelationOptions({});
     getData<TableMeta>(`/crud/${activeTable}/meta`).then((data) => {
       setMeta(data);
       loadRelationOptions(data.columns);
     }).catch((error) => message.error(errorText(error)));
-    loadRows(activeTable, 1);
+    loadRows(activeTable, 1, '', 10);
   }, [activeTable]);
 
   useEffect(() => {
@@ -1035,7 +1037,22 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
       onChange={(event) => setSearch(event.target.value)}
       onSearch={() => { setPage(1); loadRows(activeTable, 1); }}
     />
-    <Table rowKey={(record, index) => String(record[primaryKey] ?? index)} columns={columns} dataSource={rows} loading={loading} pagination={{ current: page, pageSize: 20, total, showSizeChanger: false, showTotal: (count) => `${count} records`, onChange: (next) => { setPage(next); loadRows(activeTable, next); } }} scroll={['expense_main', 'adjustment_main'].includes(activeTable) ? undefined : { x: true }} />
+    <Table rowKey={(record, index) => String(record[primaryKey] ?? index)} columns={columns} dataSource={rows} loading={loading} pagination={{
+      current: page,
+      pageSize,
+      total,
+      showSizeChanger: {
+        optionRender: (option) => Number(option.value) === ALL_ROWS_PAGE_SIZE ? 'All' : option.label,
+        labelRender: (label) => Number(label.value) === ALL_ROWS_PAGE_SIZE ? 'All / page' : label.label,
+      },
+      pageSizeOptions: ['10', '20', '50', '100', String(ALL_ROWS_PAGE_SIZE)],
+      showTotal: (count) => `${count} records`,
+      onChange: (next, nextPageSize) => {
+        const nextPage = nextPageSize !== pageSize ? 1 : next;
+        setPage(nextPage); setPageSize(nextPageSize); loadRows(activeTable, nextPage, search, nextPageSize);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      },
+    }} scroll={['expense_main', 'adjustment_main'].includes(activeTable) ? undefined : { x: true }} />
     <Modal
       title={<span className="modal-title"><FormOutlined />{editing ? `Edit ${meta?.title}` : `New ${meta?.title}`}</span>}
       open={modalOpen}

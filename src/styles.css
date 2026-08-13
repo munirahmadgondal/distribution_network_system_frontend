@@ -75,6 +75,79 @@ body {
   letter-spacing: 1.35px;
 }
 
+.login-transition-overlay {
+  position: fixed;
+  z-index: 9999;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  animation: login-overlay-fade 1.5s ease both;
+}
+
+.login-transition-road {
+  position: relative;
+  width: min(520px, 78vw);
+  height: 74px;
+  border-bottom: 3px solid #16803c;
+}
+
+.login-transition-road::after {
+  position: absolute;
+  right: 0;
+  bottom: -9px;
+  left: 0;
+  height: 2px;
+  background: repeating-linear-gradient(90deg, #b8d8c4 0 28px, transparent 28px 46px);
+  content: '';
+}
+
+.login-transition-truck {
+  position: absolute;
+  bottom: 7px;
+  left: -64px;
+  color: #16803c;
+  font-size: 52px;
+  filter: drop-shadow(0 7px 7px rgba(22, 128, 60, 0.2));
+  animation: login-truck-drive 1.35s ease-in-out forwards;
+}
+
+.login-transition-truck svg {
+  display: block;
+  width: 68px;
+  height: 40px;
+}
+
+.login-transition-text {
+  color: #173526;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.2px;
+}
+
+@keyframes login-truck-drive {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(min(520px, 78vw) + 72px)); }
+}
+
+@keyframes login-overlay-fade {
+  0%, 82% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-transition-truck,
+  .login-transition-overlay {
+    animation: none;
+  }
+}
+
 @media (max-height: 680px) {
   .login-card {
     transform: translateY(-12px);
@@ -94,6 +167,11 @@ body {
 .sidebar .ant-layout-sider-children,
 .sidebar .ant-menu-dark {
   background: transparent;
+}
+
+.sidebar .ant-menu-item,
+.sidebar .ant-menu-submenu-title {
+  font-size: 11px;
 }
 
 .sidebar .brand-title {
@@ -149,6 +227,7 @@ body {
 }
 
 .topbar {
+  position: relative;
   height: 82px;
   padding: 0 24px;
   display: flex;
@@ -156,6 +235,42 @@ body {
   justify-content: space-between;
   border-bottom: 1px solid #e5efe9;
   box-shadow: 0 2px 12px rgba(15, 77, 44, 0.04);
+}
+
+.topbar-truck-lane {
+  position: absolute;
+  z-index: 0;
+  top: 20px;
+  right: 145px;
+  left: 335px;
+  height: 44px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.topbar-moving-truck {
+  position: absolute;
+  left: -72px;
+  color: #16803c;
+  filter: drop-shadow(0 4px 4px rgba(22, 128, 60, 0.18));
+  animation: topbar-truck-drive 0.72s ease-in-out forwards;
+}
+
+.topbar-moving-truck svg {
+  display: block;
+  width: 64px;
+  height: 36px;
+}
+
+@keyframes topbar-truck-drive {
+  from { left: -72px; }
+  to { left: calc(100% + 8px); }
+}
+
+.topbar-heading,
+.topbar-actions {
+  position: relative;
+  z-index: 1;
 }
 
 .topbar-heading {

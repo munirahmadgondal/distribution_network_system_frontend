@@ -1,6 +1,7 @@
 import { Empty, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { DataRecord } from '../../types/table';
+import { defaultTablePagination } from '../../utils/tablePagination';
 
 interface DataTableProps {
   rows: DataRecord[];
@@ -33,7 +34,7 @@ export function DataTable({ rows, loading }: DataTableProps) {
       dataSource={rows}
       loading={loading}
       locale={{ emptyText: <Empty description="No records found" /> }}
-      pagination={{ pageSize: 10, showSizeChanger: true }}
+      pagination={defaultTablePagination}
       scroll={{ x: true }}
       size="middle"
     />

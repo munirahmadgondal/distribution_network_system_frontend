@@ -15,9 +15,11 @@ import { FactoryPlantLedgerPage } from './pages/configurations/FactoryPlantLedge
 import { BankAccountLedgerPage } from './pages/configurations/BankAccountLedgerPage';
 import { AccountsLedgerPage } from './pages/configurations/AccountsLedgerPage';
 import { EntityLedgerReportPage } from './pages/reports/EntityLedgerReportPage';
+import { SideTruckIcon } from './components/atoms/SideTruckIcon';
 
 export default function App() {
   const [user, setUser] = useState(getStoredUser());
+  const [showLoginTransition, setShowLoginTransition] = useState(false);
   const [activeKey, setActiveKey] = useState(() => keyFromPath(window.location.pathname));
 
   useEffect(() => {
@@ -33,7 +35,9 @@ export default function App() {
     return <LoginPage onAuthenticated={() => {
       window.history.replaceState(null, '', '/');
       setActiveKey('dashboard');
+      setShowLoginTransition(true);
       setUser(getStoredUser());
+      window.setTimeout(() => setShowLoginTransition(false), 1500);
     }} />;
   }
 
@@ -87,6 +91,7 @@ export default function App() {
   }
 
   return (
+    <>
     <AppShell
       activeKey={['transaction:retailer_dispatch:add', 'transaction:retailer_dispatch:view'].includes(activeKey)
         ? 'transaction:retailer_dispatch'
@@ -146,5 +151,14 @@ export default function App() {
         <div>You do not have permission to view this page.</div>
       )}
     </AppShell>
+    {showLoginTransition && (
+      <div className="login-transition-overlay" role="status" aria-label="Opening distribution control center">
+        <div className="login-transition-road">
+          <div className="login-transition-truck"><SideTruckIcon /></div>
+        </div>
+        <div className="login-transition-text">Preparing your distribution workspace...</div>
+      </div>
+    )}
+    </>
   );
 }
