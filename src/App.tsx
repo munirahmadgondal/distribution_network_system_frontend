@@ -112,9 +112,9 @@ export default function App() {
       }}
     >
       {activeKey === 'report:expenses' && canAccess(user, 'accounts:expense_main') ? (
-        <AccountsLedgerPage kind="expenses" onBack={() => selectPage('dashboard')} />
+        <AccountsLedgerPage kind="expenses" />
       ) : activeKey === 'report:income' && canAccess(user, 'accounts:income_main') ? (
-        <AccountsLedgerPage kind="income" onBack={() => selectPage('dashboard')} />
+        <AccountsLedgerPage kind="income" />
       ) : activeKey === 'report:retailers' && canAccess(user, 'config:retailers') ? (
         <EntityLedgerReportPage kind="retailer" />
       ) : activeKey === 'report:factory' && canAccess(user, 'config:factory_plant') ? (

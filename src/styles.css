@@ -448,6 +448,10 @@ body {
   padding-left: 36px;
 }
 
+.retailer-dispatch-subtitle.report-ledger-subtitle {
+  padding-left: 0;
+}
+
 .header-builty-select {
   display: flex;
   align-items: center;
