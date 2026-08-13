@@ -1,8 +1,8 @@
-import { EditOutlined, FormOutlined, KeyOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons';
-import { Alert, Button, Card, Checkbox, DatePicker, Form, Input, Modal, Select, Space, Switch, Table, Tag, Typography, message } from 'antd';
+import { DeleteOutlined, EditOutlined, FormOutlined, HistoryOutlined, KeyOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons';
+import { Alert, Button, Card, Checkbox, DatePicker, Descriptions, Form, Input, Modal, Popconfirm, Select, Space, Switch, Table, Tag, Tooltip, Typography, message } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
-import { canAccess, getData, getStoredUser, PagePermission, patchData, postData } from '../../services/api';
+import { canAccess, deleteData, getData, getStoredUser, PagePermission, patchData, postData } from '../../services/api';
 
 const { Title, Text } = Typography;
 interface UserRow { id: number; name: string; email: string; mobile?: string; cnic?: string; date_of_joining?: string; designation_id?: number; designation_name?: string; city_id?: number; area_id?: number; city_name?: string; area_name?: string; role_id?: number; username: string; is_system_user: boolean; roles: string }
@@ -11,6 +11,7 @@ interface RbasPage { key: string; title: string; group: string }
 interface SelectOption { value: string; label: string }
 interface AreaOption extends SelectOption { cityId: string }
 interface LocationOptions { cities: SelectOption[]; areas: AreaOption[] }
+interface UserAudit { created_at?: string; created_by_name?: string; updated_at?: string; updated_by_name?: string }
 
 function securePassword(length = 18) {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*?';
@@ -27,6 +28,8 @@ function UsersPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<UserRow | null>(null);
   const [saving, setSaving] = useState(false);
+  const [audit, setAudit] = useState<UserAudit | null>(null);
+  const [auditLoading, setAuditLoading] = useState(false);
   const [designations, setDesignations] = useState<SelectOption[]>([]);
   const [roleOptions, setRoleOptions] = useState<SelectOption[]>([]);
   const [cityOptions, setCityOptions] = useState<SelectOption[]>([]);
@@ -61,6 +64,17 @@ function UsersPage() {
     try { editing ? await patchData(`/rbas/users/${editing.id}`, payload) : await postData('/rbas/users', payload); setOpen(false); await load(); message.success('Employee saved'); }
     catch (error: any) { message.error(error.response?.data?.message || 'Unable to save user'); } finally { setSaving(false); }
   };
+  const removeEmployee = async (row: UserRow) => {
+    try { await deleteData(`/rbas/users/${row.id}`); await load(); message.success('Employee deleted'); }
+    catch (error: any) { message.error(error.response?.data?.message || 'Unable to delete employee because it may be used in existing records.'); }
+  };
+  const showAudit = async (row: UserRow) => {
+    setAuditLoading(true);
+    try { setAudit(await getData<UserAudit>(`/rbas/users/${row.id}/audit`)); }
+    catch { message.error('Unable to load employee history'); }
+    finally { setAuditLoading(false); }
+  };
+  const auditDate = (value?: string) => value ? dayjs(value).format('DD MMM YYYY, hh:mm A') : '-';
   return <>
     <div className="crud-header"><div><Title level={3}>Employee</Title><Text>Create employees with login access and control system-user access.</Text></div><Space><Button icon={<ReloadOutlined />} onClick={load}/>{canAccess(currentUser, 'rbas:users', 'create') && <Button type="primary" icon={<PlusOutlined />} onClick={() => edit()}>New Employee</Button>}</Space></div>
     <Table rowKey="id" loading={loading} dataSource={rows} columns={[
@@ -70,7 +84,11 @@ function UsersPage() {
       { title: 'Username', dataIndex: 'username' }, { title: 'Email', dataIndex: 'email' },
       { title: 'Roles', dataIndex: 'roles', render: (value: string) => value || <Text type="secondary">Not assigned</Text> },
       { title: 'System User', dataIndex: 'is_system_user', render: (value: boolean) => value ? <Tag color="green">Yes</Tag> : <Tag>No</Tag> },
-      ...(canAccess(currentUser, 'rbas:users', 'update') ? [{ title: 'Actions', render: (_: unknown, row: UserRow) => <Button icon={<EditOutlined />} onClick={() => edit(row)}>Edit</Button> }] : []),
+      { title: 'Actions', render: (_: unknown, row: UserRow) => <Space>
+        {canAccess(currentUser, 'rbas:users', 'update') && <Tooltip title="Edit employee"><Button aria-label="Edit employee" className="warning-action" icon={<EditOutlined />} onClick={() => edit(row)} /></Tooltip>}
+        {canAccess(currentUser, 'rbas:users', 'delete') && <Tooltip title="Delete employee"><Popconfirm title="Delete this employee?" description="Employees used in existing records cannot be deleted." okText="Delete" okButtonProps={{ danger: true }} onConfirm={() => removeEmployee(row)}><Button aria-label="Delete employee" danger icon={<DeleteOutlined />} /></Popconfirm></Tooltip>}
+        <Tooltip title="View history"><Button aria-label="View employee history" icon={<HistoryOutlined />} loading={auditLoading} onClick={() => showAudit(row)} /></Tooltip>
+      </Space> },
     ]}/>
     <Modal title={<span className="modal-title"><FormOutlined />{editing ? 'Edit Employee' : 'New Employee'}</span>} open={open} onCancel={() => setOpen(false)} onOk={save} confirmLoading={saving} okText="Save" width={680}>
       <Form form={form} layout="vertical" className="record-form employee-form" autoComplete="off">
@@ -118,6 +136,14 @@ function UsersPage() {
           <Input.Password autoComplete="new-password" addonAfter={<Button type="text" size="small" icon={<KeyOutlined />} onClick={generate}>Generate</Button>}/>
         </Form.Item>
       </Form>
+    </Modal>
+    <Modal title="Employee History" open={Boolean(audit)} footer={null} onCancel={() => setAudit(null)}>
+      <Descriptions bordered column={1} size="small">
+        <Descriptions.Item label="Created At">{auditDate(audit?.created_at)}</Descriptions.Item>
+        <Descriptions.Item label="Created By">{audit?.created_by_name || '-'}</Descriptions.Item>
+        <Descriptions.Item label="Last Updated At">{auditDate(audit?.updated_at)}</Descriptions.Item>
+        <Descriptions.Item label="Last Updated By">{audit?.updated_by_name || '-'}</Descriptions.Item>
+      </Descriptions>
     </Modal>
   </>;
 }
