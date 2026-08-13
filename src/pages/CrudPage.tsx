@@ -827,6 +827,15 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
         ]}
       />;
     }
+    if (activeTable === 'vehicles' && column.column_name === 'loading_capacity_unit') {
+      return <Select
+        placeholder="Select Loading Capacity Unit"
+        options={[
+          { value: 'Tons', label: 'Tons' },
+          { value: 'KG', label: 'KG' },
+        ]}
+      />;
+    }
     const options = activeTable === 'distributor_bank_accounts' && column.column_name === 'type'
       ? ['BUSINESS', 'PERSONAL', 'FACTORY']
       : enumOptions(column.enum_values);

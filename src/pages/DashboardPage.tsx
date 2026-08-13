@@ -1,7 +1,6 @@
 import {
   BankOutlined,
   CarOutlined,
-  DollarOutlined,
   HomeOutlined,
   ShopOutlined,
   SwapOutlined,
@@ -43,14 +42,6 @@ export function DashboardPage() {
         </Col>
         <Col xs={24} sm={12} md={8} xl={4}>
           <StatCard title="Retailer Dispatches" value={summary.retailerDispatches ?? 0} prefix={<SwapOutlined />} />
-        </Col>
-      </Row>
-      <Row className="dashboard-stats dashboard-amounts" gutter={[12, 12]}>
-        <Col xs={24} md={12}>
-          <StatCard title="Payment Amount" value={summary.paymentAmount ?? 0} prefix={<DollarOutlined />} />
-        </Col>
-        <Col xs={24} md={12}>
-          <StatCard title="Receipt Amount" value={summary.receiptAmount ?? 0} prefix={<DollarOutlined />} />
         </Col>
       </Row>
     </div>

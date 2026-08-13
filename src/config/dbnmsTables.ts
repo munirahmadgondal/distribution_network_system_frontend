@@ -50,13 +50,14 @@ export function pageFromKey(key: string) {
 }
 
 export function keyFromPath(pathname: string) {
-  if (pathname === '/retailer-dispatches/add') return 'transaction:retailer_dispatch:add';
-  if (['/configurations/retailers/receiving', '/retailers/receiving'].includes(pathname)) return 'config:retailers:receiving';
-  if (['/configurations/retailers/ledger', '/retailers/ledger'].includes(pathname)) return 'config:retailers:ledger';
-  if (pathname === '/configurations/factory-plants/receiving') return 'config:factory_plant:receiving';
-  if (pathname === '/configurations/factory-plants/ledger') return 'config:factory_plant:ledger';
-  if (pathname === '/configurations/distributor-bank-accounts/ledger') return 'config:distributor_bank_accounts:ledger';
-  if (pathname === '/accounts/expenses/ledger') return 'accounts:expense_main:ledger';
-  if (pathname === '/accounts/income/ledger') return 'accounts:income_main:ledger';
-  return dbnmsTablePages.find((page) => page.path === pathname)?.key || 'dashboard';
+  const normalizedPath = decodeURIComponent(pathname).replace(/\/+$/, '') || '/';
+  if (normalizedPath === '/retailer-dispatches/add') return 'transaction:retailer_dispatch:add';
+  if (['/configurations/retailers/receiving', '/retailers/receiving'].includes(normalizedPath)) return 'config:retailers:receiving';
+  if (['/configurations/retailers/ledger', '/retailers/ledger'].includes(normalizedPath)) return 'config:retailers:ledger';
+  if (normalizedPath === '/configurations/factory-plants/receiving') return 'config:factory_plant:receiving';
+  if (normalizedPath === '/configurations/factory-plants/ledger') return 'config:factory_plant:ledger';
+  if (normalizedPath === '/configurations/distributor-bank-accounts/ledger') return 'config:distributor_bank_accounts:ledger';
+  if (normalizedPath === '/accounts/expenses/ledger') return 'accounts:expense_main:ledger';
+  if (normalizedPath === '/accounts/income/ledger') return 'accounts:income_main:ledger';
+  return dbnmsTablePages.find((page) => page.path === normalizedPath)?.key || 'dashboard';
 }

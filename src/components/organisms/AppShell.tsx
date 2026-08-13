@@ -88,14 +88,31 @@ function menuItems(user: LoginResponse['user']): MenuProps['items'] { return [
   },
 ].filter((item: any) => !item.children || item.children.length > 0); }
 
+const submenuKeys = ['accounts-menu', 'configurations-menu', 'hr-menu', 'rbas-menu'];
+
+function submenuForActiveKey(activeKey: string): string | undefined {
+  if (activeKey.startsWith('accounts:')) return 'accounts-menu';
+  if (activeKey.startsWith('config:')) return 'configurations-menu';
+  if (activeKey === 'rbas:users' || activeKey.startsWith('hr:')) return 'hr-menu';
+  if (activeKey.startsWith('rbas:')) return 'rbas-menu';
+  return undefined;
+}
+
 export function AppShell({ activeKey, children, onSelect, onLogout, user }: AppShellProps) {
-  const [openKeys, setOpenKeys] = useState<string[]>(() => activeKey.startsWith('config:') ? ['configurations-menu'] : []);
+  const [openKeys, setOpenKeys] = useState<string[]>(() => {
+    const submenu = submenuForActiveKey(activeKey);
+    return submenu ? [submenu] : [];
+  });
 
   useEffect(() => {
-    setOpenKeys((current) => activeKey.startsWith('config:')
-      ? current.includes('configurations-menu') ? current : [...current, 'configurations-menu']
-      : current.filter((key) => key !== 'configurations-menu'));
+    const submenu = submenuForActiveKey(activeKey);
+    setOpenKeys(submenu ? [submenu] : []);
   }, [activeKey]);
+
+  function handleOpenChange(keys: string[]) {
+    const latestOpenKey = keys.find((key) => !openKeys.includes(key));
+    setOpenKeys(latestOpenKey && submenuKeys.includes(latestOpenKey) ? [latestOpenKey] : []);
+  }
 
   return (
     <Layout className="app-shell">
@@ -106,7 +123,7 @@ export function AppShell({ activeKey, children, onSelect, onLogout, user }: AppS
           mode="inline"
           selectedKeys={[activeKey]}
           openKeys={openKeys}
-          onOpenChange={(keys) => setOpenKeys(keys.map(String))}
+          onOpenChange={(keys) => handleOpenChange(keys.map(String))}
           items={menuItems(user)}
           onClick={({ key }) => onSelect(key)}
         />
