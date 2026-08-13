@@ -1,0 +1,772 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: #f4faf6;
+  color: #173526;
+  font-size: 12px;
+}
+
+.login-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background-color: #f4faf6;
+  background-image: url('/login-background.png');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  border: 1px solid #dbeee2;
+  box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
+}
+
+.login-heading {
+  margin: 28px 0 18px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #173526;
+  text-align: center;
+}
+
+.login-alert {
+  margin-bottom: 18px;
+}
+
+.login-card .brand-mark {
+  justify-content: center;
+  padding: 22px 20px 8px;
+  text-align: center;
+}
+
+.login-card .brand-title {
+  font-size: 20px;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.sidebar {
+  border-right: 1px solid #0b3d23;
+  box-shadow: 8px 0 28px rgba(23, 53, 38, 0.04);
+}
+
+.sidebar .brand-title {
+  color: #ffffff;
+}
+
+.sidebar .brand-icon {
+  background: #ffffff;
+  color: #0f4d2c;
+}
+
+.sidebar .ant-menu-dark .ant-menu-submenu-selected > .ant-menu-submenu-title,
+.sidebar .ant-menu-dark .ant-menu-submenu-selected > .ant-menu-submenu-title .anticon,
+.sidebar .ant-menu-dark .ant-menu-submenu-selected > .ant-menu-submenu-title .ant-menu-submenu-arrow {
+  color: #ffffff;
+}
+
+.brand-mark {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 20px;
+}
+
+.brand-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: #16803c;
+  color: #ffffff;
+  font-size: 20px;
+}
+
+.brand-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #173526;
+}
+
+.brand-subtitle {
+  margin-top: 2px;
+  font-size: 10px;
+  color: #6b8074;
+}
+
+.topbar {
+  height: 68px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e5efe9;
+}
+
+.topbar-title {
+  font-size: 16px;
+  font-weight: 750;
+  color: #173526;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.user-name {
+  color: #5f7568;
+  font-weight: 600;
+}
+
+.content {
+  padding: 24px;
+}
+
+.page-heading {
+  margin-bottom: 18px;
+}
+
+.page-heading h2,
+.page-heading h3 {
+  margin-bottom: 4px;
+  color: #173526;
+}
+
+.page-heading.compact {
+  margin-bottom: 16px;
+}
+
+.dashboard-page .page-heading h2 {
+  margin-top: 0;
+}
+
+.stat-card {
+  border: 1px solid #dbeee2;
+}
+
+.dashboard-page .stat-card {
+  background-color: #e8f6ee;
+}
+
+.dashboard-page .stat-card .ant-card-body {
+  padding: 14px 16px;
+}
+
+.dashboard-page .stat-card .ant-statistic-title {
+  margin-bottom: 4px;
+  color: #16803c;
+  font-weight: bold;
+}
+
+.dashboard-page .stat-card .ant-statistic-content {
+  font-size: 20px;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.dashboard-page .dashboard-amounts {
+  margin-top: 12px;
+}
+
+.retailer-dispatch-add-page {
+  width: 100%;
+  margin: 0 auto;
+}
+
+.retailer-dispatch-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.retailer-dispatch-title-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.retailer-dispatch-title-row .ant-btn {
+  color: #173526;
+}
+
+.retailer-dispatch-subtitle {
+  display: block;
+  padding-left: 36px;
+}
+
+.header-builty-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-builty-select .ant-form-item {
+  width: 250px;
+  margin: 0;
+}
+
+.builty-table-wrap,
+.dispatch-input-table-wrap,
+.dispatch-summary-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #dbeee2;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.dispatch-input-table-wrap {
+  margin-top: 12px;
+}
+
+.dispatch-section-heading {
+  margin: 14px 0 6px !important;
+  color: #173526 !important;
+}
+
+.dispatch-section-card {
+  margin-top: 16px;
+}
+
+.ledger-filter-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid #e1eee6;
+  border-radius: 8px;
+  background: #f8fbf9;
+}
+
+.ledger-filter-actions {
+  margin-left: auto;
+}
+
+.ledger-filter-standalone {
+  margin-top: 16px;
+}
+
+.ledger-filter-label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.retailer-dispatch-page-header + .dispatch-section-heading {
+  margin-top: 12px !important;
+}
+
+.dispatch-summary-table-wrap {
+  margin-top: 16px;
+  background: #f4faf6;
+}
+
+.builty-info-table,
+.dispatch-input-table,
+.dispatch-summary-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dispatch-input-table {
+  min-width: 1120px;
+  table-layout: fixed;
+}
+
+.builty-info-table th,
+.dispatch-input-table th,
+.dispatch-summary-table th {
+  padding: 6px 4px;
+  border-right: 1px solid #cfe4d7;
+  border-bottom: 1px solid #cfe4d7;
+  background: #e8f6ee;
+  color: #173526;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.builty-info-table td,
+.dispatch-input-table td,
+.dispatch-summary-table td {
+  padding: 4px;
+  border-right: 1px solid #e1eee6;
+  border-bottom: 1px solid #e1eee6;
+  vertical-align: top;
+}
+
+.dispatch-input-table th:nth-child(1) { width: 115px; }
+.dispatch-input-table th:nth-child(2) { width: 150px; }
+.dispatch-input-table th:nth-child(3) { width: 70px; }
+.dispatch-input-table th:nth-child(4) { width: 85px; }
+.dispatch-input-table th:nth-child(5) { width: 95px; }
+.dispatch-input-table th:nth-child(6),
+.dispatch-input-table th:nth-child(7) { width: 80px; }
+.dispatch-input-table th:nth-child(8),
+.dispatch-input-table th:nth-child(9),
+.dispatch-input-table th:nth-child(10),
+.dispatch-input-table th:nth-child(11) { width: 85px; }
+.dispatch-input-table th:nth-child(12) { width: 170px; }
+.dispatch-input-table th:nth-child(13) { width: 105px; }
+
+.fare-payer-cell .ant-checkbox-wrapper {
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.ledger-description-label {
+  color: #15803d;
+}
+
+.dispatch-input-table th {
+  text-transform: none;
+}
+
+.builty-info-table th {
+  text-transform: none;
+}
+
+.dispatch-input-table .ant-form-item,
+.builty-info-table .ant-form-item {
+  margin-bottom: 0;
+}
+
+.dispatch-input-table .ant-form-item-explain {
+  padding-top: 3px;
+  font-size: 9px;
+  line-height: 1.2;
+}
+
+.metric-cell,
+.dispatch-summary-table td {
+  color: #173526;
+  font-weight: 700;
+  text-align: center;
+  vertical-align: middle !important;
+}
+
+.dispatch-action-cell {
+  text-align: center;
+  vertical-align: middle !important;
+}
+
+.add-dispatch-button {
+  display: block;
+  height: 42px;
+  margin-top: 12px;
+  margin-left: auto;
+  color: #ffffff;
+}
+
+.page-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding: 16px 0;
+}
+
+.module-card {
+  border: 1px solid #dbeee2;
+}
+
+.finance-summary-row {
+  margin-bottom: 16px;
+}
+
+.finance-operations { margin-top: 16px; }
+
+.dispatch-detail-summary {
+  margin-bottom: 20px;
+}
+
+.dispatch-detail-table {
+  margin-top: 4px;
+}
+
+.dispatch-detail-table .dispatch-detail-total-row > td {
+  border-top: 2px solid #16803c;
+  border-bottom: 1px solid #cfe7d7;
+  font-weight: 700;
+}
+
+.dispatch-detail-table .dispatch-detail-total-row .summary-label {
+  background: #16803c !important;
+  color: #fff;
+}
+
+.dispatch-detail-table .dispatch-detail-total-row .summary-bags {
+  background: #edf5ff !important;
+  color: #245a8d;
+}
+
+.dispatch-detail-table .dispatch-detail-total-row .summary-rate {
+  background: #f4f7f5 !important;
+  color: #718078;
+}
+
+.dispatch-detail-table .dispatch-detail-total-row .summary-cement {
+  background: #e3f2e8 !important;
+  color: #116530;
+}
+
+.dispatch-detail-table .dispatch-detail-total-row .summary-fare {
+  background: #fff4dc !important;
+  color: #8a5a00;
+}
+
+.dispatch-detail-table .dispatch-detail-total-row .summary-total {
+  background: #d2eadb !important;
+  color: #0f4d2c;
+}
+
+.dispatch-detail-table .dispatch-detail-total-row .summary-profit-positive {
+  background: #dcf5e5 !important;
+  color: #08752e;
+}
+
+.dispatch-detail-table .dispatch-detail-total-row .summary-profit-negative {
+  background: #ffeded !important;
+  color: #c62828;
+}
+
+.dispatch-detail-totals {
+  margin-top: 20px;
+}
+
+.dispatch-detail-summary .ant-descriptions-item-label,
+.dispatch-detail-totals .ant-descriptions-item-label {
+  background: #e3f2e8 !important;
+  color: #0f4d2c !important;
+  font-weight: 700;
+}
+
+.record-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+  max-height: 62vh;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.record-form .ant-form-item {
+  margin-bottom: 12px;
+}
+
+.record-form.compact {
+  grid-template-columns: 1fr;
+  max-height: none;
+}
+
+.employee-form .employee-password-field {
+  grid-column: 1 / -1;
+}
+
+.employee-form .employee-password-info {
+  grid-column: 1 / -1;
+  margin-bottom: 16px;
+}
+
+.receipt-payment-mode {
+  grid-column: 1 / -1;
+}
+
+.receipt-fare-amount {
+  grid-column: 1;
+}
+
+.receipt-cement-amount {
+  grid-column: 2;
+}
+
+.adjustment-release-toggle {
+  grid-column: 2;
+}
+
+.adjustment-instrument-number {
+  grid-column: 1;
+}
+
+.adjustment-release-inline {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.7fr) minmax(180px, 1.3fr);
+  gap: 12px;
+  align-items: end;
+}
+
+.adjustment-release-date {
+  grid-column: 2;
+}
+
+.form-section-start {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  padding-top: 18px;
+  border-top: 1px solid #e5efe9;
+}
+
+.form-section-title {
+  margin-bottom: 14px;
+  color: #173526;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.form-field-full {
+  grid-column: 1 / -1;
+}
+
+.pending-builty-table {
+  margin-top: 8px;
+}
+
+.pending-builty-totals {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.pending-builty-totals > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 1px solid #cfe4d7;
+  border-radius: 8px;
+  background: #e8f6ee;
+}
+
+.pending-builty-table .ant-checkbox-wrapper-disabled,
+.pending-builty-table .ant-checkbox-disabled {
+  opacity: 1;
+}
+
+.pending-builty-table .ant-checkbox-disabled.ant-checkbox-checked .ant-checkbox-inner {
+  border-color: #16803c !important;
+  background-color: #16803c !important;
+}
+
+.pending-builty-table .ant-checkbox-disabled.ant-checkbox-checked .ant-checkbox-inner::after {
+  border-color: #ffffff !important;
+}
+
+.pending-builty-table .ant-checkbox-disabled:not(.ant-checkbox-checked) .ant-checkbox-inner {
+  border-color: #8ba699 !important;
+  background-color: #ffffff !important;
+}
+
+.warning-action {
+  border-color: #d89614;
+  color: #d89614;
+}
+
+.warning-action:hover,
+.warning-action:focus {
+  border-color: #faad14 !important;
+  color: #faad14 !important;
+}
+
+.ant-form-item-label > label {
+  font-weight: 700;
+}
+
+/* Keep disabled form controls visually consistent with enabled white fields. */
+.ant-input-disabled,
+.ant-input[disabled],
+.ant-input-number-disabled,
+.ant-input-number-disabled .ant-input-number-input,
+.ant-picker-disabled,
+.ant-picker-disabled input,
+.ant-select-disabled .ant-select-selector,
+textarea.ant-input-disabled {
+  background-color: #ffffff !important;
+  color: #173526 !important;
+  -webkit-text-fill-color: #173526 !important;
+  opacity: 1;
+}
+
+.ant-select-disabled .ant-select-selection-item,
+.ant-picker-disabled input,
+.ant-input-number-disabled .ant-input-number-input {
+  color: #173526 !important;
+  -webkit-text-fill-color: #173526 !important;
+  opacity: 1;
+}
+
+.crud-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+  background: #16803c4a;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+}
+
+.crud-header h3,
+.crud-header h4 {
+  margin: 0;
+}
+
+.crud-search {
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.crud-table-name {
+  display: block;
+  margin-bottom: 12px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+}
+
+.ant-modal .ant-modal-content {
+  padding: 0;
+  overflow: hidden;
+}
+
+.ant-modal .ant-modal-header {
+  margin: 0;
+  padding: 18px 28px;
+  border-bottom: 1px solid #e5efe9;
+  background-color: #16803c4a;
+}
+
+.ant-modal .ant-modal-body {
+  padding: 22px 28px;
+}
+
+.ant-modal .ant-modal-footer {
+  margin: 0;
+  padding: 16px 28px 20px;
+  border-top: 1px solid #e5efe9;
+}
+
+.modal-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #173526;
+  font-size: 16px;
+  font-weight: 750;
+}
+
+.modal-title .anticon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #e8f6ee;
+  color: #16803c;
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .topbar {
+    padding: 0 14px;
+  }
+
+  .topbar-title {
+    font-size: 13px;
+  }
+
+  .content {
+    padding: 16px;
+  }
+
+  .user-name {
+    display: none;
+  }
+
+  .crud-header {
+    flex-direction: column;
+  }
+
+  .record-form { grid-template-columns: 1fr; }
+
+  .receipt-fare-amount,
+  .receipt-cement-amount,
+  .adjustment-release-toggle,
+  .adjustment-instrument-number,
+  .adjustment-release-date { grid-column: 1; }
+}
+
+@media print {
+  @page {
+    size: landscape;
+    margin: 10mm;
+  }
+
+  body,
+  .app-shell,
+  .content {
+    background: #ffffff !important;
+  }
+
+  .sidebar,
+  .topbar,
+  .retailer-dispatch-page-header,
+  .add-dispatch-button,
+  .page-form-actions {
+    display: none !important;
+  }
+
+  .content {
+    padding: 0 !important;
+  }
+
+  .retailer-dispatch-add-page {
+    width: 100% !important;
+  }
+
+  .builty-table-wrap,
+  .dispatch-input-table-wrap,
+  .dispatch-summary-table-wrap {
+    overflow: visible !important;
+    break-inside: avoid;
+  }
+
+  .dispatch-input-table {
+    min-width: 0 !important;
+  }
+
+  .dispatch-input-table th:last-child,
+  .dispatch-input-table td:last-child {
+    display: none !important;
+  }
+
+  .dispatch-input-table .ant-select-arrow,
+  .dispatch-input-table .ant-select-clear {
+    display: none !important;
+  }
+
+  .dispatch-input-table .ant-select-selector,
+  .dispatch-input-table .ant-input-number,
+  .builty-info-table .ant-input-number {
+    border-color: transparent !important;
+    box-shadow: none !important;
+  }
+}
