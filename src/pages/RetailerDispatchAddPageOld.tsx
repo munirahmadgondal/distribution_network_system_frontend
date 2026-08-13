@@ -120,7 +120,7 @@ function DispatchTableRow({
         ><InputNumber className="full-width" min={1} precision={0} disabled={disabled} /></Form.Item>
       </td>
       <td><Form.Item name={[index, 'ratePerBag']} rules={[{ required: true, message: 'Rate required' }, { type: 'number', min: 0 }]}><InputNumber className="full-width" min={0} disabled={disabled} /></Form.Item></td>
-      <td><Form.Item name={[index, 'farePerBag']} rules={[{ validator: (_, value) => Number(value || 0) > maximumFreight ? Promise.reject(new Error('Cannot exceed builty freight')) : Promise.resolve() }]}><InputNumber className="full-width" min={0} disabled={disabled} /></Form.Item></td>
+      <td><Form.Item name={[index, 'farePerBag']} rules={[{ validator: (_, value) => Number(value || 0) > maximumFreight ? Promise.reject(new Error('Cannot exceed bilty freight')) : Promise.resolve() }]}><InputNumber className="full-width" min={0} disabled={disabled} /></Form.Item></td>
       <td><Form.Item name={[index, 'grandTotal']}><InputNumber className="full-width" disabled /></Form.Item></td>
       <td className="dispatch-action-cell">{removable ? <Button danger icon={<DeleteOutlined />} onClick={onRemove}>Remove</Button> : <Text type="secondary">Primary</Text>}</td>
     </tr>
@@ -165,7 +165,7 @@ export function RetailerDispatchAddPage({ onBack }: { onBack: () => void }) {
     if (!factoryDispatchId) { setDispatch(null); return; }
     getData<FactoryDispatch>(`/crud/t_factory_dispatch/${factoryDispatchId}`)
       .then(setDispatch)
-      .catch(() => { setDispatch(null); message.error('Unable to load the selected Builty Number'); });
+      .catch(() => { setDispatch(null); message.error('Unable to load the selected Bilty Number'); });
   }, [factoryDispatchId]);
 
   async function save() {
@@ -196,13 +196,13 @@ export function RetailerDispatchAddPage({ onBack }: { onBack: () => void }) {
               <Button type="text" aria-label="Back to Retailer Dispatches" icon={<ArrowLeftOutlined />} onClick={onBack} />
               <Title level={3}>New Retailer Dispatches</Title>
             </div>
-            <Text className="retailer-dispatch-subtitle">Create one or more retailer deliveries against the same builty.</Text>
+            <Text className="retailer-dispatch-subtitle">Create one or more retailer deliveries against the same bilty.</Text>
           </div>
           <div className="retailer-dispatch-header-actions">
             <div className="header-builty-select">
-              <Text strong>Builty Number</Text>
+              <Text strong>Bilty Number</Text>
               <Form.Item name="factoryDispatchId">
-                <Select showSearch allowClear optionFilterProp="label" placeholder="Select Builty Number" options={builtyOptions} />
+                <Select showSearch allowClear optionFilterProp="label" placeholder="Select Bilty Number" options={builtyOptions} />
               </Form.Item>
             </div>
           </div>

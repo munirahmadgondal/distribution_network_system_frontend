@@ -1,5 +1,5 @@
-import { BookOutlined, DeleteOutlined, EditOutlined, EyeOutlined, FormOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
-import { Button, Card, Checkbox, DatePicker, Descriptions, Form, Input, InputNumber, Modal, Popconfirm, Radio, Select, Space, Switch, Table, Typography, message } from 'antd';
+import { BookOutlined, DeleteOutlined, EditOutlined, ExportOutlined, EyeOutlined, FormOutlined, HistoryOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Button, Card, Checkbox, DatePicker, Descriptions, Form, Input, InputNumber, Modal, Popconfirm, Radio, Result, Select, Space, Spin, Switch, Table, Tooltip, Typography, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
@@ -20,7 +20,7 @@ interface ColumnMeta {
 }
 interface TableMeta extends TableInfo { primaryKey: string; columns: ColumnMeta[] }
 interface CrudResponse { page: number; limit: number; total: number; primaryKey: string; rows: DataRecord[] }
-interface CrudPageProps { initialTable: string; title?: string; description?: string; embedded?: boolean; onCreate?: () => void; onHeaderLedger?: () => void; onReceive?: (record: DataRecord) => void; onLedger?: (record: DataRecord) => void }
+interface CrudPageProps { initialTable: string; title?: string; description?: string; embedded?: boolean; onCreate?: () => void; onView?: (record: DataRecord) => void; onHeaderLedger?: () => void; onReceive?: (record: DataRecord) => void; onLedger?: (record: DataRecord) => void }
 interface SelectOption { value: string; label: string }
 interface FactoryDispatchWeight { weight_in_tons: number | string; remaining_bags: number | string; factory_plant_id: number | string }
 interface VehicleCapacity { loading_capacity: number | string; loading_capacity_unit: string }
@@ -45,6 +45,7 @@ interface RetailerLedger {
   retailer: { id: string; name: string };
   entries: Array<{ cashflow_type: string; date: string | null; receivable: number | string; payable: number | string; current_balance: number | string }>;
 }
+interface AuditInfo { created_at: string | null; created_by: string; updated_at: string | null; updated_by: string }
 
 const systemFields = new Set(['id', 'created_at', 'updated_at', 'created_by', 'updated_by', 'version', 'is_deleted']);
 const foreignTableLabels: Record<string, string> = {
@@ -59,10 +60,11 @@ const foreignTableLabels: Record<string, string> = {
   factory_plant: 'Factory Plant',
   retailers: 'Retailer',
   vehicles: 'Vehicle',
-  t_factory_dispatch: 'Builty Number',
+  t_factory_dispatch: 'Bilty Number',
 };
 const vehicleOwnerFields = new Set(['owner_name', 'owner_contact', 'owner_city', 'owner_address']);
 const label = (key: string, column?: ColumnMeta): string => {
+  if (key === 'builty_number') return 'Bilty Number';
   if (column?.foreign_table) {
     return foreignTableLabels[column.foreign_table] || label(column.foreign_table);
   }
@@ -102,7 +104,7 @@ function errorText(error: unknown) {
   return Array.isArray(detail) ? detail.join(', ') : detail || 'The operation could not be completed.';
 }
 
-export function CrudPage({ initialTable, title = 'Administration', description, embedded = false, onCreate, onHeaderLedger, onReceive, onLedger }: CrudPageProps) {
+export function CrudPage({ initialTable, title = 'Administration', description, embedded = false, onCreate, onView, onHeaderLedger, onReceive, onLedger }: CrudPageProps) {
   const currentUser = getStoredUser();
   const [activeTable, setActiveTable] = useState(initialTable);
   const [meta, setMeta] = useState<TableMeta>();
@@ -131,6 +133,10 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
   const [retailerLedgerLoading, setRetailerLedgerLoading] = useState(false);
   const [releaseRecord, setReleaseRecord] = useState<DataRecord | null>(null);
   const [releaseSaving, setReleaseSaving] = useState(false);
+  const [auditInfo, setAuditInfo] = useState<AuditInfo | null>(null);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditOpen, setAuditOpen] = useState(false);
+  const [auditError, setAuditError] = useState('');
   const [form] = Form.useForm<Record<string, any>>();
   const [releaseForm] = Form.useForm<{ released_at: dayjs.Dayjs }>();
   const ownerType = Form.useWatch('owner_type', form);
@@ -775,6 +781,21 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
       setRetailerLedgerLoading(false);
     }
   }
+  async function openAuditInfo(record: DataRecord) {
+    const recordId = activeTable === 'retailer_dispatch' ? record.factory_dispatch_id : record[primaryKey];
+    if (recordId == null) return;
+    setAuditOpen(true);
+    setAuditInfo(null);
+    setAuditError('');
+    setAuditLoading(true);
+    try {
+      setAuditInfo(await getData<AuditInfo>(`/crud/audit/${activeTable}/${recordId}`));
+    } catch (error) {
+      setAuditError(errorText(error));
+    } finally {
+      setAuditLoading(false);
+    }
+  }
   function field(column: ColumnMeta) {
     if (column.foreign_table) {
       const options = activeTable === 'factory_destination' && column.column_name === 'factory_plant_id'
@@ -867,6 +888,33 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
   }
 
   const columns = useMemo<ColumnsType<DataRecord>>(() => {
+    const compactTable = ['expense_main', 'adjustment_main'].includes(activeTable);
+    const compactColumnWidths: Record<string, number> = activeTable === 'expense_main'
+      ? {
+          title: 135,
+          amount: 85,
+          date: 95,
+          payment_mode: 95,
+          distributor_bank_account_id: 115,
+          instrument_type: 105,
+          instrument_number: 110,
+          description: 165,
+          head_name: 110,
+          subhead_name: 110,
+        }
+      : activeTable === 'adjustment_main'
+        ? {
+            adjustment_name: 125,
+            factory_plant_name: 145,
+            amount: 90,
+            date: 95,
+            distributor_bank_account_id: 115,
+            instrument_type: 100,
+            instrument_number: 105,
+            released_at: 105,
+            description: 150,
+          }
+        : {};
     const hiddenTableFields = new Set([
       'is_deleted',
       primaryKey,
@@ -888,10 +936,16 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
       ? ['retailer_name', 'business_name', 'city_name', 'contact_number', 'balance', 'status'].filter((key) => availableKeys.includes(key))
       : activeTable === 'vehicles'
         ? ['make', 'model', 'reg_number', 'loading_capacity', 'loading_capacity_unit', 'owner_type', 'owner_name', 'owner_contact', 'status'].filter((key) => availableKeys.includes(key))
+        : activeTable === 'retailer_dispatch'
+          ? ['builty_number', 'date', 'retailer_count', 'total_bags', 'total_cement_amount', 'total_fare_amount', 'fare_received', 'fare_balance', 'grand_total'].filter((key) => availableKeys.includes(key))
+        : activeTable === 't_factory_dispatch'
+          ? availableKeys.filter((key) => key !== 'created_at').slice(0, 8)
+        : activeTable === 'factory_plant'
+          ? availableKeys.filter((key) => key !== 'created_at').slice(0, 8)
         : availableKeys.slice(0, 8);
     const dataColumns = keys.flatMap((key) => {
       const column = meta?.columns.find((item) => item.column_name === key);
-      const dataColumn = { title: activeTable === 'retailers' && key === 'city_name' ? 'City / Area' : activeTable === 'retailers' && key === 'opening_balance' ? 'Balance' : activeTable === 'factory_destination' && key === 'city_id' ? 'Destination City' : label(key, column), dataIndex: key, key, ellipsis: true, render: (value: unknown, record: DataRecord) => {
+      const dataColumn = { title: activeTable === 'retailers' && key === 'city_name' ? 'City / Area' : activeTable === 'retailers' && key === 'opening_balance' ? 'Balance' : activeTable === 'factory_destination' && key === 'city_id' ? 'Destination City' : label(key, column), dataIndex: key, key, ellipsis: true, ...(compactColumnWidths[key] ? { width: compactColumnWidths[key] } : {}), render: (value: unknown, record: DataRecord) => {
         if (activeTable === 'retailers' && key === 'city_name') {
           return value ? `${String(value)}${record.city_area_name ? `: ${String(record.city_area_name)}` : ''}` : '-';
         }
@@ -913,6 +967,12 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
         }
         if (activeTable === 'retailers' && key === 'balance') {
           return Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 2 });
+        }
+        if (activeTable === 'retailer_dispatch' && key === 'date') {
+          return formatTableDate(value, 'date');
+        }
+        if (activeTable === 'retailer_dispatch' && key === 'total_bags') {
+          return `${Number(value || 0).toLocaleString()} / ${Number(record.bilty_total_bags || 0).toLocaleString()}`;
         }
         if (activeTable === 'adjustment_main' && key === 'is_released') {
           return value ? <Text type="success" strong>Released</Text> : <Text type="warning" strong>Unreleased</Text>;
@@ -943,11 +1003,20 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
 
     const hasDispatchView = ['t_factory_dispatch', 'retailer_dispatch'].includes(activeTable);
     const hasRetailerLedger = ['retailers', 'factory_plant', 'distributor_bank_accounts'].includes(activeTable);
-    const hasActions = hasDispatchView || hasRetailerLedger || (activeTable !== 'retailer_dispatch' && (canUpdate || canDelete));
+    const hasActions = true;
     return hasActions ? [...dataColumns, {
-      title: 'Actions', key: 'actions', fixed: 'right' as const, width: hasRetailerLedger ? 390 : activeTable === 'adjustment_main' ? 280 : activeTable === 't_factory_dispatch' ? 166 : 118, render: (_: unknown, record: DataRecord) => <Space>{activeTable === 'adjustment_main' && !record.is_released && canUpdate && <Button type="primary" onClick={() => { releaseForm.setFieldValue('released_at', dayjs()); setReleaseRecord(record); }}>Release</Button>}{hasDispatchView && <Button aria-label="View dispatch details" icon={<EyeOutlined />} loading={dispatchDetailLoading} onClick={() => openDispatchDetail(record)} />}{hasRetailerLedger && onReceive && (activeTable !== 'retailers' || record.status === 'ACTIVE') && <Button type="primary" ghost style={{ background: '#fff' }} aria-label={activeTable === 'factory_plant' ? 'Add payment' : 'Add receiving'} icon={<PlusOutlined />} onClick={() => onReceive(record)}>{activeTable === 'factory_plant' ? 'Add Payment' : 'Add Receivings'}</Button>}{hasRetailerLedger && <Button icon={<BookOutlined />} loading={retailerLedgerLoading} onClick={() => onLedger ? onLedger(record) : openRetailerLedger(record)}>View Ledger</Button>}{activeTable !== 'retailer_dispatch' && canUpdate && <Button aria-label="Edit record" className="warning-action" icon={<EditOutlined />} onClick={() => openEdit(record)} />}{activeTable !== 'retailer_dispatch' && activeTable !== 'retailers' && canDelete && <Popconfirm title="Delete this record?" description="Related business records may prevent deletion." onConfirm={() => remove(record)}><Button aria-label="Delete record" danger icon={<DeleteOutlined />} /></Popconfirm>}</Space>,
+      title: 'Actions', key: 'actions', ...(compactTable ? {} : { fixed: 'right' as const }), width: hasRetailerLedger ? 430 : activeTable === 'adjustment_main' ? 235 : activeTable === 'expense_main' ? 145 : activeTable === 'retailer_dispatch' ? 190 : activeTable === 't_factory_dispatch' ? 206 : 158, render: (_: unknown, record: DataRecord) => <Space>
+        {activeTable === 'adjustment_main' && !record.is_released && canUpdate && <Tooltip title="Release adjustment"><Button type="primary" onClick={() => { releaseForm.setFieldValue('released_at', dayjs()); setReleaseRecord(record); }}>Release</Button></Tooltip>}
+        {hasDispatchView && <Tooltip title="View bilty details"><Button aria-label="View dispatch details" icon={<EyeOutlined />} loading={dispatchDetailLoading} onClick={() => openDispatchDetail(record)} /></Tooltip>}
+        {activeTable === 'retailer_dispatch' && onView && <Tooltip title="Open bilty page"><Button aria-label="Open bilty page" icon={<ExportOutlined />} onClick={() => onView(record)} /></Tooltip>}
+        {hasRetailerLedger && onReceive && (activeTable !== 'retailers' || record.status === 'ACTIVE') && <Tooltip title={activeTable === 'factory_plant' ? 'Add payment' : 'Add receiving'}><Button type="primary" ghost style={{ background: '#fff' }} aria-label={activeTable === 'factory_plant' ? 'Add payment' : 'Add receiving'} icon={<PlusOutlined />} onClick={() => onReceive(record)}>{activeTable === 'factory_plant' ? 'Add Payment' : 'Add Receivings'}</Button></Tooltip>}
+        {hasRetailerLedger && <Tooltip title="View ledger"><Button icon={<BookOutlined />} loading={retailerLedgerLoading} onClick={() => onLedger ? onLedger(record) : openRetailerLedger(record)}>View Ledger</Button></Tooltip>}
+        {activeTable !== 'retailer_dispatch' && canUpdate && <Tooltip title="Edit record"><Button aria-label="Edit record" className="warning-action" icon={<EditOutlined />} onClick={() => openEdit(record)} /></Tooltip>}
+        {activeTable !== 'retailer_dispatch' && activeTable !== 'retailers' && canDelete && <Tooltip title="Delete record"><Popconfirm title="Delete this record?" description="Related business records may prevent deletion." onConfirm={() => remove(record)}><Button aria-label="Delete record" danger icon={<DeleteOutlined />} /></Popconfirm></Tooltip>}
+        <Tooltip title="View audit information"><Button aria-label="View audit information" icon={<HistoryOutlined />} loading={auditLoading} onClick={() => openAuditInfo(record)} /></Tooltip>
+      </Space>,
     }] : dataColumns;
-  }, [activeTable, rows, meta, primaryKey, relationOptions, canUpdate, canDelete, dispatchDetailLoading, retailerLedgerLoading, onReceive, onLedger]);
+  }, [activeTable, rows, meta, primaryKey, relationOptions, canUpdate, canDelete, dispatchDetailLoading, retailerLedgerLoading, auditLoading, onView, onReceive, onLedger]);
 
   const content = <>
     <div className="crud-header">
@@ -966,7 +1035,7 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
       onChange={(event) => setSearch(event.target.value)}
       onSearch={() => { setPage(1); loadRows(activeTable, 1); }}
     />
-    <Table rowKey={(record, index) => String(record[primaryKey] ?? index)} columns={columns} dataSource={rows} loading={loading} pagination={{ current: page, pageSize: 20, total, showSizeChanger: false, showTotal: (count) => `${count} records`, onChange: (next) => { setPage(next); loadRows(activeTable, next); } }} scroll={{ x: true }} />
+    <Table rowKey={(record, index) => String(record[primaryKey] ?? index)} columns={columns} dataSource={rows} loading={loading} pagination={{ current: page, pageSize: 20, total, showSizeChanger: false, showTotal: (count) => `${count} records`, onChange: (next) => { setPage(next); loadRows(activeTable, next); } }} scroll={['expense_main', 'adjustment_main'].includes(activeTable) ? undefined : { x: true }} />
     <Modal
       title={<span className="modal-title"><FormOutlined />{editing ? `Edit ${meta?.title}` : `New ${meta?.title}`}</span>}
       open={modalOpen}
@@ -1121,7 +1190,7 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
         ])}
         {activeTable === 't_bank_retailer_receipts' && selectedRetailerId && (
           <div className="form-field-full pending-builty-table">
-            <div className="form-section-title">Builty Receivables</div>
+            <div className="form-section-title">Bilty Receivables</div>
             <div className="pending-builty-totals">
               <div><span>Total Fare Receivable</span><strong>{pendingBuiltyTotals.fare.toLocaleString('en-US', { maximumFractionDigits: 2 })}</strong></div>
               <div><span>Total Cement Receivable</span><strong>{pendingBuiltyTotals.cement.toLocaleString('en-US', { maximumFractionDigits: 2 })}</strong></div>
@@ -1132,9 +1201,9 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
               pagination={false}
               loading={pendingBuiltyLoading}
               dataSource={projectedBuiltyState.rows}
-              locale={{ emptyText: 'No Builty receivables' }}
+              locale={{ emptyText: 'No Bilty receivables' }}
               columns={[
-                { title: 'Builty Number', dataIndex: 'builty_number' },
+                { title: 'Bilty Number', dataIndex: 'builty_number' },
                 { title: 'Date', dataIndex: 'date', render: (value: string) => formatTableDate(value, 'date') },
                 { title: 'Fare Receivable', dataIndex: 'fare_receivable', align: 'right', render: (value: string | number) => Number(value).toLocaleString('en-US', { maximumFractionDigits: 2 }) },
                 { title: 'Cement Receivable', dataIndex: 'cement_receivable', align: 'right', render: (value: string | number) => Number(value).toLocaleString('en-US', { maximumFractionDigits: 2 }) },
@@ -1145,11 +1214,27 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
         )}
       </Form>
     </Modal>
+    <Modal
+      title={<span className="modal-title"><HistoryOutlined />Audit Information</span>}
+      open={auditOpen}
+      onCancel={() => setAuditOpen(false)}
+      footer={<Button onClick={() => setAuditOpen(false)}>Close</Button>}
+      width={620}
+    >
+      {auditLoading && <div className="bilty-detail-loading"><Spin tip="Loading audit information..." /></div>}
+      {!auditLoading && auditError && <Result status="error" title="Unable to load audit information" subTitle={auditError} />}
+      {auditInfo && <Descriptions bordered column={1} size="small">
+        <Descriptions.Item label="Created At">{auditInfo.created_at ? dayjs(auditInfo.created_at).format('DD-MMM-YYYY hh:mm A') : '—'}</Descriptions.Item>
+        <Descriptions.Item label="Created By">{auditInfo.created_by || 'System'}</Descriptions.Item>
+        <Descriptions.Item label="Last Updated At">{auditInfo.updated_at ? dayjs(auditInfo.updated_at).format('DD-MMM-YYYY hh:mm A') : '—'}</Descriptions.Item>
+        <Descriptions.Item label="Last Updated By">{auditInfo.updated_by || 'System'}</Descriptions.Item>
+      </Descriptions>}
+    </Modal>
     <Modal title={<span className="modal-title"><FormOutlined />Release Adjustment</span>} open={Boolean(releaseRecord)} onOk={releaseAdjustment} confirmLoading={releaseSaving} onCancel={() => { setReleaseRecord(null); releaseForm.resetFields(); }} okText="Save">
       <Form form={releaseForm} layout="vertical"><Form.Item name="released_at" label="Release Date" rules={[{ required: true, message: 'Release Date is required' }]}><DatePicker className="full-width" /></Form.Item></Form>
     </Modal>
     <Modal
-      title={dispatchDetail ? `Builty Details - ${dispatchDetail.dispatch.builty_number}` : 'Builty Details'}
+      title={dispatchDetail ? `Bilty Details - ${dispatchDetail.dispatch.builty_number}` : 'Bilty Details'}
       open={Boolean(dispatchDetail)}
       onCancel={() => setDispatchDetail(null)}
       footer={null}
@@ -1158,7 +1243,7 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
       {dispatchDetail && (
         <>
           <Descriptions bordered column={{ xs: 1, sm: 2, lg: 4 }} size="small" className="dispatch-detail-summary">
-            <Descriptions.Item label="Builty Number">{String(dispatchDetail.dispatch.builty_number)}</Descriptions.Item>
+            <Descriptions.Item label="Bilty Number">{String(dispatchDetail.dispatch.builty_number)}</Descriptions.Item>
             <Descriptions.Item label="Date">{formatTableDate(dispatchDetail.dispatch.date, 'date')}</Descriptions.Item>
             <Descriptions.Item label="Factory">{String(dispatchDetail.dispatch.factory_name)}</Descriptions.Item>
             <Descriptions.Item label="Factory Plant">{String(dispatchDetail.dispatch.plant_name)}</Descriptions.Item>
@@ -1168,7 +1253,6 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
             <Descriptions.Item label="Rate Per Ton">{Number(dispatchDetail.dispatch.rate_per_ton).toLocaleString()}</Descriptions.Item>
             <Descriptions.Item label="Factory Rate Per Bag">{Number(dispatchDetail.dispatch.rate_per_bag).toLocaleString()}</Descriptions.Item>
             <Descriptions.Item label="Factory Amount">{Number(dispatchDetail.dispatch.payable_amount).toLocaleString()}</Descriptions.Item>
-            <Descriptions.Item label="Factory Remaining">{Number(dispatchDetail.dispatch.factory_remaining_amount).toLocaleString()}</Descriptions.Item>
           </Descriptions>
           <Table
             className="dispatch-detail-table"

@@ -7,6 +7,7 @@ import {
   CreditCardOutlined,
   DollarOutlined,
   EnvironmentOutlined,
+  FileTextOutlined,
   RiseOutlined,
   IdcardOutlined,
   LogoutOutlined,
@@ -79,6 +80,15 @@ function menuItems(user: LoginResponse['user']): MenuProps['items'] { return [
     })),
   },
   {
+    key: 'reports-menu', icon: <FileTextOutlined />, label: 'Reports',
+    children: [
+      ...(canAccess(user, 'accounts:expense_main') ? [{ key: 'report:expenses', icon: <DollarOutlined />, label: 'Expense' }] : []),
+      ...(canAccess(user, 'accounts:income_main') ? [{ key: 'report:income', icon: <RiseOutlined />, label: 'Income' }] : []),
+      ...(canAccess(user, 'config:retailers') ? [{ key: 'report:retailers', icon: <ShoppingOutlined />, label: 'Retailer' }] : []),
+      ...(canAccess(user, 'config:factory_plant') ? [{ key: 'report:factory', icon: <ShopOutlined />, label: 'Factory' }] : []),
+    ],
+  },
+  {
     key: 'rbas-menu', icon: <SafetyCertificateOutlined />, label: 'RBAS',
     children: rbasPages.filter((page) => canAccess(user, page.key)).map((page) => ({
       key: page.key,
@@ -88,12 +98,13 @@ function menuItems(user: LoginResponse['user']): MenuProps['items'] { return [
   },
 ].filter((item: any) => !item.children || item.children.length > 0); }
 
-const submenuKeys = ['accounts-menu', 'configurations-menu', 'hr-menu', 'rbas-menu'];
+const submenuKeys = ['accounts-menu', 'configurations-menu', 'hr-menu', 'reports-menu', 'rbas-menu'];
 
 function submenuForActiveKey(activeKey: string): string | undefined {
   if (activeKey.startsWith('accounts:')) return 'accounts-menu';
   if (activeKey.startsWith('config:')) return 'configurations-menu';
   if (activeKey === 'rbas:users' || activeKey.startsWith('hr:')) return 'hr-menu';
+  if (activeKey.startsWith('report:')) return 'reports-menu';
   if (activeKey.startsWith('rbas:')) return 'rbas-menu';
   return undefined;
 }
@@ -130,7 +141,11 @@ export function AppShell({ activeKey, children, onSelect, onLogout, user }: AppS
       </Sider>
       <Layout>
         <Header className="topbar">
-          <div className="topbar-title">Distributor Network Management</div>
+          <div className="topbar-heading">
+            <div className="topbar-eyebrow">MK Traders</div>
+            <div className="topbar-title">Distribution Control Center</div>
+            <div className="topbar-subtitle">Operations, finance and logistics</div>
+          </div>
           <div className="topbar-actions">
             <Button danger icon={<LogoutOutlined />} onClick={onLogout}>
               Logout

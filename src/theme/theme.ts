@@ -46,7 +46,11 @@ export const appTheme: ThemeConfig = {
       borderRadiusLG: 8,
     },
     Table: {
-      headerSplitColor: '#dbeee2',
+      headerBg: '#16803c4a',
+      headerColor: '#000000',
+      headerSplitColor: '#9fc9ad',
+      headerSortActiveBg: '#16803c66',
+      headerSortHoverBg: '#16803c5c',
       cellPaddingBlock: 8,
       cellPaddingInline: 12,
     },

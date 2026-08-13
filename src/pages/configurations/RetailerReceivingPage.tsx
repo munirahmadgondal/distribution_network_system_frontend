@@ -98,8 +98,8 @@ export function RetailerReceivingPage({ onBack }: { onBack: () => void }) {
         <table className="builty-info-table">
           <thead><tr>
             <th>City / City Area</th>
-            <th>Total No. of Builty</th>
-            <th>Pending No. of Builty</th>
+            <th>Total No. of Bilty</th>
+            <th>Pending No. of Bilty</th>
             <th>Pending Cement Amount</th>
           </tr></thead>
           <tbody><tr>
@@ -131,7 +131,7 @@ export function RetailerReceivingPage({ onBack }: { onBack: () => void }) {
         </div>
       </Form></Card></Col>
       <Col xs={24} lg={8}><Card title="Pending Fare Builties"><Table rowKey="id" size="small" pagination={false} dataSource={data?.fareBuilties || []} columns={[
-        { title: 'Builty Number', dataIndex: 'builty_number' },
+        { title: 'Bilty Number', dataIndex: 'builty_number' },
         { title: 'Received', dataIndex: 'received_amount', align: 'right', render: value => Number(value).toLocaleString() },
         { title: 'Pending', dataIndex: 'pending_amount', align: 'right', render: value => Number(value).toLocaleString() },
         { title: 'Action', render: (_, row) => <Button size="small" type="primary" onClick={() => openFareReceipt(row)}>Receive Fare</Button> },
@@ -149,7 +149,7 @@ export function RetailerReceivingPage({ onBack }: { onBack: () => void }) {
     >
       {fareToReceive && <Form form={fareForm} layout="vertical">
         <Row gutter={16}>
-          <Col span={8}><Form.Item label="Builty Number"><Input value={fareToReceive.builty_number} disabled /></Form.Item></Col>
+          <Col span={8}><Form.Item label="Bilty Number"><Input value={fareToReceive.builty_number} disabled /></Form.Item></Col>
           <Col span={8}><Form.Item label="Total Fare"><Input value={Number(fareToReceive.total_fare_amount).toLocaleString()} disabled /></Form.Item></Col>
           <Col span={8}><Form.Item label="Remaining Fare"><InputNumber value={Math.max(Number(fareToReceive.pending_amount) - (Number(receivingFareAmount) || 0), 0)} formatter={(value) => Number(value || 0).toLocaleString()} controls={false} disabled style={{ width: '100%' }} /></Form.Item></Col>
         </Row>

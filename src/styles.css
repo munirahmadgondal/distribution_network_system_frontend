@@ -28,6 +28,7 @@ body {
   max-width: 420px;
   border: 1px solid #dbeee2;
   box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
+  transform: translateY(-32px);
 }
 
 .login-heading {
@@ -44,12 +45,40 @@ body {
 
 .login-card .brand-mark {
   justify-content: center;
-  padding: 22px 20px 8px;
-  text-align: center;
+  gap: 15px;
+  margin: 6px 0 0;
+  padding: 20px 20px 10px;
+  border-bottom: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.login-card .brand-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 15px;
+  box-shadow: 0 8px 20px rgba(22, 128, 60, 0.2);
+  font-size: 24px;
 }
 
 .login-card .brand-title {
-  font-size: 20px;
+  font-size: 23px;
+  font-weight: 800;
+  letter-spacing: -0.25px;
+}
+
+.login-card .brand-subtitle {
+  margin-top: 4px;
+  color: #16803c;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.35px;
+}
+
+@media (max-height: 680px) {
+  .login-card {
+    transform: translateY(-12px);
+  }
 }
 
 .app-shell {
@@ -58,7 +87,13 @@ body {
 
 .sidebar {
   border-right: 1px solid #0b3d23;
+  background: linear-gradient(180deg, #125b35 0%, #0f4d2c 45%, #0a3820 100%) !important;
   box-shadow: 8px 0 28px rgba(23, 53, 38, 0.04);
+}
+
+.sidebar .ant-layout-sider-children,
+.sidebar .ant-menu-dark {
+  background: transparent;
 }
 
 .sidebar .brand-title {
@@ -80,45 +115,86 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 22px 20px;
+  min-height: 82px;
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.035);
 }
 
 .brand-icon {
   display: grid;
   place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 8px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   background: #16803c;
   color: #ffffff;
   font-size: 20px;
 }
 
 .brand-title {
-  font-size: 14px;
-  font-weight: 800;
+  font-size: 16px;
+  font-weight: 750;
+  letter-spacing: 0.2px;
   color: #173526;
 }
 
 .brand-subtitle {
-  margin-top: 2px;
-  font-size: 10px;
-  color: #6b8074;
+  margin-top: 3px;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.15px;
+  text-transform: uppercase;
 }
 
 .topbar {
-  height: 68px;
+  height: 82px;
   padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid #e5efe9;
+  box-shadow: 0 2px 12px rgba(15, 77, 44, 0.04);
+}
+
+.topbar-heading {
+  position: relative;
+  padding-left: 15px;
+  line-height: 1.15;
+}
+
+.topbar-heading::before {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 0;
+  width: 4px;
+  border-radius: 4px;
+  background: #16803c;
+  content: '';
+}
+
+.topbar-eyebrow {
+  margin-bottom: 3px;
+  color: #16803c;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
 }
 
 .topbar-title {
-  font-size: 16px;
-  font-weight: 750;
   color: #173526;
+  font-size: 17px;
+  font-weight: 760;
+  letter-spacing: -0.2px;
+}
+
+.topbar-subtitle {
+  margin-top: 4px;
+  color: #6b8074;
+  font-size: 10px;
 }
 
 .topbar-actions {
@@ -182,6 +258,54 @@ body {
   margin-top: 12px;
 }
 
+.dashboard-quick-links {
+  margin-top: 12px;
+  border-color: #dbeee2;
+}
+
+.dashboard-quick-links .ant-card-head {
+  min-height: 38px;
+  background: #16803c4a;
+}
+
+.dashboard-quick-links .ant-card-body {
+  padding: 12px 16px;
+}
+
+.dashboard-quick-links .ant-btn {
+  border-color: #16803c;
+  background: #ffffff;
+  color: #16803c;
+}
+
+.dashboard-quick-links .ant-btn:hover,
+.dashboard-quick-links .ant-btn:focus {
+  border-color: #0f6d32 !important;
+  background: #ffffff !important;
+  color: #0f6d32 !important;
+}
+
+.dashboard-insights { margin-top: 12px; }
+.payment-insight-card { height: 100%; border-color: #dbeee2; }
+.payment-insight-card .ant-card-head { background: #16803c4a; }
+.payment-insight-subtitle { color: #000000; }
+.payment-insight-summary { display: flex; gap: 24px; margin-bottom: 8px; color: #5f7568; }
+.payment-insight-summary strong { margin-left: 4px; color: #173526; }
+.payment-insight-legend { display: flex; justify-content: flex-end; gap: 16px; margin-bottom: 12px; font-size: 11px; }
+.payment-insight-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.payment-insight-legend i { width: 10px; height: 10px; border-radius: 2px; }
+.payment-insight-legend .paid, .payment-insight-bar.paid { background: #16803c; }
+.payment-insight-legend .outstanding, .payment-insight-bar.outstanding { background: #d89614; }
+.payment-insight-chart { display: grid; gap: 12px; }
+.payment-insight-row { display: grid; grid-template-columns: minmax(90px, 145px) 1fr; align-items: center; gap: 10px; }
+.payment-insight-name { overflow: hidden; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.payment-insight-bars { display: grid; gap: 4px; }
+.payment-insight-track { position: relative; height: 16px; overflow: hidden; border-radius: 3px; background: #16803c0d; }
+.payment-insight-bar { height: 100%; border-radius: 3px; opacity: .82; }
+.payment-insight-track span { position: absolute; top: 0; right: 5px; font-size: 10px; line-height: 16px; }
+.insight-loading { opacity: .55; }
+
+
 .retailer-dispatch-add-page {
   width: 100%;
   margin: 0 auto;
@@ -227,10 +351,6 @@ body {
   border: 1px solid #dbeee2;
   border-radius: 8px;
   background: #ffffff;
-}
-
-.dispatch-input-table-wrap {
-  margin-top: 12px;
 }
 
 .dispatch-section-heading {
@@ -293,12 +413,47 @@ body {
   padding: 6px 4px;
   border-right: 1px solid #cfe4d7;
   border-bottom: 1px solid #cfe4d7;
-  background: #e8f6ee;
-  color: #173526;
+  background: #16803c4a;
+  color: #000000;
   font-size: 10px;
   font-weight: 700;
   text-align: center;
   text-transform: uppercase;
+}
+
+/* Use the primary brand color for every Ant Design table header. */
+.ant-table-wrapper .ant-table-thead > tr > th,
+.ant-table-wrapper .ant-table-thead > tr > td {
+  background: #16803c4a !important;
+  color: #000000 !important;
+  border: 1px solid #9fc9ad !important;
+}
+
+.ant-table-wrapper .ant-table-thead > tr > th:hover,
+.ant-table-wrapper .ant-table-thead > tr > th.ant-table-column-sort,
+.ant-table-wrapper .ant-table-thead > tr > th.ant-table-column-has-sorters:hover {
+  background: #16803c66 !important;
+}
+
+.ant-table-wrapper .ant-table-thead .ant-table-column-sorter,
+.ant-table-wrapper .ant-table-thead .ant-table-filter-trigger,
+.ant-table-wrapper .ant-table-thead .anticon {
+  color: #000000 !important;
+}
+
+.ant-table-wrapper .ant-table-container {
+  border: 1px solid #9fc9ad !important;
+}
+
+.ant-table-wrapper .ant-table-tbody > tr > td,
+.ant-table-wrapper .ant-table-summary > tr > td {
+  background: #16803c17;
+  border-right: 1px solid #cfe4d7 !important;
+  border-bottom: 1px solid #cfe4d7 !important;
+}
+
+.ant-table-wrapper .ant-table-tbody > tr:hover > td {
+  background: #16803c24 !important;
 }
 
 .builty-info-table td,
@@ -307,6 +462,7 @@ body {
   padding: 4px;
   border-right: 1px solid #e1eee6;
   border-bottom: 1px solid #e1eee6;
+  background: #16803c17;
   vertical-align: top;
 }
 
@@ -323,6 +479,59 @@ body {
 .dispatch-input-table th:nth-child(11) { width: 85px; }
 .dispatch-input-table th:nth-child(12) { width: 170px; }
 .dispatch-input-table th:nth-child(13) { width: 105px; }
+
+.dispatch-input-table-readonly {
+  min-width: 0;
+  width: 100%;
+}
+
+.dispatch-input-table-readonly th,
+.dispatch-input-table-readonly td {
+  padding-right: 2px;
+  padding-left: 2px;
+  overflow-wrap: anywhere;
+}
+
+.dispatch-input-table-readonly th:nth-child(1) { width: 8%; }
+.dispatch-input-table-readonly th:nth-child(2) { width: 11%; }
+.dispatch-input-table-readonly th:nth-child(3) { width: 6%; }
+.dispatch-input-table-readonly th:nth-child(4) { width: 8%; }
+.dispatch-input-table-readonly th:nth-child(5) { width: 9%; }
+.dispatch-input-table-readonly th:nth-child(6) { width: 7%; }
+.dispatch-input-table-readonly th:nth-child(7) { width: 7%; }
+.dispatch-input-table-readonly th:nth-child(8) { width: 9%; }
+.dispatch-input-table-readonly th:nth-child(9) { width: 8%; }
+.dispatch-input-table-readonly th:nth-child(10) { width: 8%; }
+.dispatch-input-table-readonly th:nth-child(11) { width: 8%; }
+.dispatch-input-table-readonly th:nth-child(12) { width: 11%; }
+
+.dispatch-input-table-readonly .fare-payer-cell .ant-checkbox-wrapper {
+  white-space: normal;
+}
+
+.dispatch-input-table-readonly .fare-payer-cell .ant-checkbox-wrapper-disabled {
+  color: #173526;
+  cursor: default;
+  opacity: 1;
+}
+
+.dispatch-input-table-readonly .fare-payer-cell .ant-checkbox-disabled {
+  opacity: 1;
+}
+
+.dispatch-input-table-readonly .fare-payer-cell .ant-checkbox-disabled .ant-checkbox-inner {
+  border-color: #8ba699 !important;
+  background-color: #ffffff !important;
+}
+
+.dispatch-input-table-readonly .fare-payer-cell .ant-checkbox-disabled.ant-checkbox-checked .ant-checkbox-inner {
+  border-color: #16803c !important;
+  background-color: #16803c !important;
+}
+
+.dispatch-input-table-readonly .fare-payer-cell .ant-checkbox-disabled.ant-checkbox-checked .ant-checkbox-inner::after {
+  border-color: #ffffff !important;
+}
 
 .fare-payer-cell .ant-checkbox-wrapper {
   white-space: nowrap;
@@ -396,6 +605,12 @@ body {
 
 .dispatch-detail-table {
   margin-top: 4px;
+}
+
+.bilty-detail-loading {
+  display: grid;
+  min-height: 320px;
+  place-items: center;
 }
 
 .dispatch-detail-table .dispatch-detail-total-row > td {

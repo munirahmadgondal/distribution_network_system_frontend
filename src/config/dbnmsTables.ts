@@ -51,7 +51,15 @@ export function pageFromKey(key: string) {
 
 export function keyFromPath(pathname: string) {
   const normalizedPath = decodeURIComponent(pathname).replace(/\/+$/, '') || '/';
+  const reportPaths: Record<string, string> = {
+    '/reports/expenses': 'report:expenses',
+    '/reports/income': 'report:income',
+    '/reports/retailers': 'report:retailers',
+    '/reports/factory': 'report:factory',
+  };
+  if (reportPaths[normalizedPath]) return reportPaths[normalizedPath];
   if (normalizedPath === '/retailer-dispatches/add') return 'transaction:retailer_dispatch:add';
+  if (/^\/retailer-dispatches\/[^/]+$/.test(normalizedPath)) return 'transaction:retailer_dispatch:view';
   if (['/configurations/retailers/receiving', '/retailers/receiving'].includes(normalizedPath)) return 'config:retailers:receiving';
   if (['/configurations/retailers/ledger', '/retailers/ledger'].includes(normalizedPath)) return 'config:retailers:ledger';
   if (normalizedPath === '/configurations/factory-plants/receiving') return 'config:factory_plant:receiving';
