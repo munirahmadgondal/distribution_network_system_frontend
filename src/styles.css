@@ -17,7 +17,7 @@ body {
   place-items: center;
   padding: 24px;
   background-color: #f4faf6;
-  background-image: url('/login-background.png');
+  background-image: url('/public/login-background.png');
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
