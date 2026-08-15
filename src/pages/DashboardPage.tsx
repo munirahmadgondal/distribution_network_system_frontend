@@ -34,15 +34,16 @@ function PaymentInsightCard({ title, subtitle, items }: { title: string; subtitl
   </Card>;
 }
 
-export function DashboardPage({ onNavigate }: { onNavigate: (key: string) => void }) {
+export function DashboardPage({ onNavigate, onLoaded }: { onNavigate: (key: string) => void; onLoaded?: () => void }) {
   const [summary, setSummary] = useState<Record<string, number>>({});
   const [insights, setInsights] = useState<PaymentInsights>({ retailers: [], factories: [] });
   const [insightsLoading, setInsightsLoading] = useState(true);
 
   useEffect(() => {
-    getData<Record<string, number>>('/dashboard/summary').then(setSummary).catch(() => setSummary({}));
-    getData<PaymentInsights>('/dashboard/payment-insights').then(setInsights).catch(() => setInsights({ retailers: [], factories: [] })).finally(() => setInsightsLoading(false));
-  }, []);
+    const summaryRequest = getData<Record<string, number>>('/dashboard/summary').then(setSummary).catch(() => setSummary({}));
+    const insightsRequest = getData<PaymentInsights>('/dashboard/payment-insights').then(setInsights).catch(() => setInsights({ retailers: [], factories: [] })).finally(() => setInsightsLoading(false));
+    void Promise.allSettled([summaryRequest, insightsRequest]).then(() => onLoaded?.());
+  }, [onLoaded]);
 
   return (
     <div className="dashboard-page">

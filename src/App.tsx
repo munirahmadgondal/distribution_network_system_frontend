@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { AppShell } from './components/organisms/AppShell';
 import { keyFromPath, pageFromKey } from './config/dbnmsTables';
 import { configurationPageComponents } from './pages/configurations';
@@ -19,12 +19,15 @@ import { SideTruckIcon } from './components/atoms/SideTruckIcon';
 
 export default function App() {
   const [user, setUser] = useState(getStoredUser());
-  const [showLoginTransition, setShowLoginTransition] = useState(false);
+  const [showDashboardTransition, setShowDashboardTransition] = useState(false);
   const [activeKey, setActiveKey] = useState(() => keyFromPath(window.location.pathname));
+  const dashboardLoaded = useCallback(() => setShowDashboardTransition(false), []);
 
   useEffect(() => {
     function handlePopState() {
-      setActiveKey(keyFromPath(window.location.pathname));
+      const nextKey = keyFromPath(window.location.pathname);
+      if (nextKey === 'dashboard') setShowDashboardTransition(true);
+      setActiveKey(nextKey);
     }
 
     window.addEventListener('popstate', handlePopState);
@@ -35,9 +38,8 @@ export default function App() {
     return <LoginPage onAuthenticated={() => {
       window.history.replaceState(null, '', '/');
       setActiveKey('dashboard');
-      setShowLoginTransition(true);
+      setShowDashboardTransition(true);
       setUser(getStoredUser());
-      window.setTimeout(() => setShowLoginTransition(false), 1500);
     }} />;
   }
 
@@ -46,6 +48,7 @@ export default function App() {
   const ActiveRbasPage = RbasPageComponents[activeKey];
 
   function selectPage(key: string) {
+    if (key === 'dashboard' && activeKey !== 'dashboard') setShowDashboardTransition(true);
     const reportPaths: Record<string, string> = {
       'report:expenses': '/reports/expenses', 'report:income': '/reports/income',
       'report:retailers': '/reports/retailers', 'report:factory': '/reports/factory',
@@ -146,12 +149,12 @@ export default function App() {
       ) : activePage && canAccess(user, activePage.key) && ActiveConfigurationPage ? (
         <ActiveConfigurationPage />
       ) : canAccess(user, 'dashboard') ? (
-        <DashboardPage onNavigate={selectPage} />
+        <DashboardPage onNavigate={selectPage} onLoaded={dashboardLoaded} />
       ) : (
         <div>You do not have permission to view this page.</div>
       )}
     </AppShell>
-    {showLoginTransition && (
+    {showDashboardTransition && (
       <div className="login-transition-overlay" role="status" aria-label="Opening distribution control center">
         <div className="login-transition-road">
           <div className="login-transition-truck"><SideTruckIcon /></div>

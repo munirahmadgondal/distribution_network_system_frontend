@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { canAccess, deleteData, getData, getStoredUser, PagePermission, patchData, postData } from '../../services/api';
 
 const { Title, Text } = Typography;
-interface UserRow { id: number; name: string; email: string; mobile?: string; cnic?: string; date_of_joining?: string; designation_id?: number; designation_name?: string; city_id?: number; area_id?: number; city_name?: string; area_name?: string; role_id?: number; username: string; is_system_user: boolean; roles: string }
+interface UserRow { id: number; name: string; email?: string; mobile?: string; cnic?: string; date_of_joining?: string; designation_id?: number; designation_name?: string; city_id?: number; area_id?: number; city_name?: string; area_name?: string; role_id?: number; username: string; is_system_user: boolean; roles: string }
 interface RoleRow { id: number; name: string; description?: string; is_active: boolean; user_count: number }
 interface RbasPage { key: string; title: string; group: string }
 interface SelectOption { value: string; label: string }
@@ -34,8 +34,10 @@ function UsersPage() {
   const [roleOptions, setRoleOptions] = useState<SelectOption[]>([]);
   const [cityOptions, setCityOptions] = useState<SelectOption[]>([]);
   const [areaOptions, setAreaOptions] = useState<AreaOption[]>([]);
+  const [usernameManuallyEdited, setUsernameManuallyEdited] = useState(false);
   const [form] = Form.useForm();
   const systemUserEnabled = Form.useWatch('isSystemUser', form);
+  const employeeName = Form.useWatch('name', form);
   const selectedCityId = Form.useWatch('cityId', form);
   const filteredAreaOptions = useMemo(() => areaOptions.filter((area) => area.cityId === String(selectedCityId)), [areaOptions, selectedCityId]);
   const load = async () => { setLoading(true); try { setRows(await getData<UserRow[]>('/rbas/users')); } finally { setLoading(false); } };
@@ -48,8 +50,16 @@ function UsersPage() {
       setAreaOptions(options.areas);
     });
   }, []);
+  useEffect(() => {
+    if (!open || editing || usernameManuallyEdited || !String(employeeName || '').trim()) return;
+    const timer = window.setTimeout(() => {
+      void getData<{ username: string }>(`/rbas/users/username-suggestion?name=${encodeURIComponent(String(employeeName))}`)
+        .then(({ username }) => form.setFieldValue('username', username));
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [editing, employeeName, form, open, usernameManuallyEdited]);
   const generate = () => { const password = securePassword(); form.setFieldValue('password', password); void navigator.clipboard?.writeText(password); message.success('Secure password generated and copied'); };
-  const edit = (row?: UserRow) => { setEditing(row || null); form.resetFields(); form.setFieldsValue(row ? {
+  const edit = (row?: UserRow) => { setEditing(row || null); setUsernameManuallyEdited(Boolean(row)); form.resetFields(); form.setFieldsValue(row ? {
     ...row,
     designationId: row.designation_id ? String(row.designation_id) : undefined,
     cityId: row.city_id ? String(row.city_id) : undefined,
@@ -81,7 +91,7 @@ function UsersPage() {
       { title: 'Name', dataIndex: 'name' }, { title: 'Designation', dataIndex: 'designation_name', render: (value: string) => value || <Text type="secondary">Not assigned</Text> },
       { title: 'City / Area', render: (_: unknown, row: UserRow) => row.city_name ? `${row.city_name}${row.area_name ? `: ${row.area_name}` : ''}` : <Text type="secondary">Not assigned</Text> },
       { title: 'CNIC', dataIndex: 'cnic' }, { title: 'Joining Date', dataIndex: 'date_of_joining', render: (value: string) => value ? value.slice(0, 10) : '' },
-      { title: 'Username', dataIndex: 'username' }, { title: 'Email', dataIndex: 'email' },
+      { title: 'Username', dataIndex: 'username' },
       { title: 'Roles', dataIndex: 'roles', render: (value: string) => value || <Text type="secondary">Not assigned</Text> },
       { title: 'System User', dataIndex: 'is_system_user', render: (value: boolean) => value ? <Tag color="green">Yes</Tag> : <Tag>No</Tag> },
       { title: 'Actions', render: (_: unknown, row: UserRow) => <Space>
@@ -93,7 +103,22 @@ function UsersPage() {
     <Modal title={<span className="modal-title"><FormOutlined />{editing ? 'Edit Employee' : 'New Employee'}</span>} open={open} onCancel={() => setOpen(false)} onOk={save} confirmLoading={saving} okText="Save" width={680}>
       <Form form={form} layout="vertical" className="record-form employee-form" autoComplete="off">
         <Form.Item name="name" label="Name" rules={[{required:true}]}><Input/></Form.Item>
-        <Form.Item name="email" label="Email" rules={[{required:true,type:'email'}]}><Input/></Form.Item>
+        <Form.Item
+          name="username"
+          label="Username"
+          validateTrigger="onBlur"
+          rules={[
+            { required: true, message: 'Username is required' },
+            { pattern: /^[a-z0-9]+(?:_[a-z0-9]+)*$/, message: 'Use lowercase letters, numbers and underscores only' },
+            { validator: async (_, value) => {
+              if (!value || !/^[a-z0-9]+(?:_[a-z0-9]+)*$/.test(value)) return;
+              const query = new URLSearchParams({ username: value });
+              if (editing) query.set('excludeId', String(editing.id));
+              const result = await getData<{ available: boolean }>(`/rbas/users/username-availability?${query}`);
+              if (!result.available) throw new Error('Username is already in use');
+            } },
+          ]}
+        ><Input onChange={() => setUsernameManuallyEdited(true)} autoComplete="off"/></Form.Item>
         <Form.Item name="cnic" label="CNIC" rules={[{required:true,message:'CNIC is required'}]}><Input placeholder="e.g. 35202-1234567-1" maxLength={20}/></Form.Item>
         <Form.Item name="mobile" label="Mobile"><Input/></Form.Item>
         <Form.Item name="dateOfJoining" label="Date of Joining"><DatePicker className="full-width" format="DD MMM YYYY"/></Form.Item>
@@ -121,19 +146,19 @@ function UsersPage() {
           />
         </Form.Item>
         <Form.Item name="isSystemUser" label="System User" valuePropName="checked">
-          <Switch disabled={!isSuperAdmin} onChange={(checked) => { if (!checked) form.setFieldValue('roleId', undefined); }}/>
+          <Switch disabled={!isSuperAdmin} onChange={(checked) => { if (!checked) form.setFieldsValue({ roleId: undefined, password: undefined }); }}/>
         </Form.Item>
         {systemUserEnabled && <Form.Item name="roleId" label="Role" rules={[{required:true,message:'Role is required for a system user'}]}>
           <Select showSearch optionFilterProp="label" placeholder="Select role" options={roleOptions}/>
         </Form.Item>}
-        {editing && <Alert className="employee-password-info" type="info" showIcon message="Leave the password empty to keep the employee's current password." />}
+        {editing && systemUserEnabled && <Alert className="employee-password-info" type="info" showIcon message="Enter a password for this system user." />}
         <Form.Item
           className="employee-password-field"
           name="password"
-          label={editing ? 'New Password (leave blank to keep current)' : 'Password'}
-          rules={editing ? [{ min: 12, message: 'Password must be at least 12 characters' }] : [{ required: true, min: 12, message: 'Password must be at least 12 characters' }]}
+          label="Password"
+          rules={systemUserEnabled ? [{ required: true, min: 12, message: 'Password must be at least 12 characters' }] : []}
         >
-          <Input.Password autoComplete="new-password" addonAfter={<Button type="text" size="small" icon={<KeyOutlined />} onClick={generate}>Generate</Button>}/>
+          <Input.Password disabled={!systemUserEnabled} autoComplete="new-password" addonAfter={<Button disabled={!systemUserEnabled} type="text" size="small" icon={<KeyOutlined />} onClick={generate}>Generate</Button>}/>
         </Form.Item>
       </Form>
     </Modal>

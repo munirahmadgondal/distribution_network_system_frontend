@@ -25,7 +25,6 @@ interface CrudPageProps { initialTable: string; title?: string; description?: st
 interface SelectOption { value: string; label: string }
 interface FactoryDispatchWeight { weight_in_tons: number | string; remaining_bags: number | string; factory_plant_id: number | string }
 interface VehicleCapacity { loading_capacity: number | string; loading_capacity_unit: string }
-interface FactoryPlantBalance { remaining_amount: number | string }
 interface RetailerLocation { city_id: number | string }
 interface FactoryDestinationFare { total_fare_rate: number | string }
 interface RetailerBalance { remaining_amount: number | string; current_balance: number | string }
@@ -122,7 +121,6 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
   const [destinationPlantOptions, setDestinationPlantOptions] = useState<SelectOption[]>([]);
   const [vehicleCapacityTons, setVehicleCapacityTons] = useState<number | null>(null);
   const [factoryDispatchMaxBags, setFactoryDispatchMaxBags] = useState<number | null>(null);
-  const [factoryPlantAvailableAmount, setFactoryPlantAvailableAmount] = useState<number | null>(null);
   const [factoryDestinationFare, setFactoryDestinationFare] = useState<number | null>(null);
   const [retailerAvailableBalance, setRetailerAvailableBalance] = useState<number | null>(null);
   const [bankReceiptFareAvailable, setBankReceiptFareAvailable] = useState<number | null>(null);
@@ -157,7 +155,6 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
   const retailerDispatchFarePerBag = Form.useWatch('fare_per_bag', form);
   const retailerDispatchFareReceived = Form.useWatch('fare_received', form);
   const factoryDispatchRatePerTon = Form.useWatch('rate_per_ton', form);
-  const factoryDispatchAmount = Form.useWatch('amount', form);
   const bankReceiptAmount = Form.useWatch('amount', form);
   const bankReceiptFareAmount = Form.useWatch('fare_amount', form);
   const bankReceiptCementAmount = Form.useWatch('cement_amount', form);
@@ -172,9 +169,6 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
   const calculatedBags = weightInTons !== undefined && weightInTons !== null && weightInTons !== '' && Number.isFinite(Number(weightInTons))
     ? Number(weightInTons) * 20
     : undefined;
-  const factoryPlantProjectedRemaining = factoryPlantAvailableAmount == null
-    ? null
-    : factoryPlantAvailableAmount - (Number(factoryDispatchAmount) || 0);
   const projectedBuiltyState = useMemo(() => {
     const enteredAmount = Number(bankReceiptAmount) || 0;
     let balance = (retailerAvailableBalance || 0) + enteredAmount;
@@ -369,27 +363,6 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
       });
     }
   }, [activeTable, form, ownerType]);
-
-  useEffect(() => {
-    let cancelled = false;
-    if (activeTable !== 't_factory_dispatch' || !selectedFactoryPlantId) {
-      setFactoryPlantAvailableAmount(null);
-      return () => { cancelled = true; };
-    }
-
-    getData<FactoryPlantBalance>(`/crud/factory_plant/${selectedFactoryPlantId}`).then((plant) => {
-      if (cancelled) return;
-      const currentRecordAmount = editing && String(editing.factory_plant_id) === String(selectedFactoryPlantId)
-        ? Number(editing.amount) || 0
-        : 0;
-      const availableAmount = Number(plant.remaining_amount) + currentRecordAmount;
-      setFactoryPlantAvailableAmount(Number.isFinite(availableAmount) ? availableAmount : null);
-    }).catch(() => {
-      if (!cancelled) setFactoryPlantAvailableAmount(null);
-    });
-
-    return () => { cancelled = true; };
-  }, [activeTable, editing, selectedFactoryPlantId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1095,9 +1068,7 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
               </div>
             ) : <Form.Item
               name={column.column_name}
-              label={activeTable === 't_factory_dispatch' && column.column_name === 'amount' && factoryPlantProjectedRemaining != null
-                  ? `Amount (Remaining: ${factoryPlantProjectedRemaining.toLocaleString('en-US', { maximumFractionDigits: 2 })})`
-                : activeTable === 'retailer_dispatch' && column.column_name === 'no_of_bags' && factoryDispatchMaxBags != null
+              label={activeTable === 'retailer_dispatch' && column.column_name === 'no_of_bags' && factoryDispatchMaxBags != null
                   ? `No. of Bags (Remaining Bags: ${factoryDispatchMaxBags})`
                 : activeTable === 'factory_destination' && column.column_name === 'city_id'
                   ? 'Destination City'

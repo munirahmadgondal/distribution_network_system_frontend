@@ -33,7 +33,7 @@ export interface LoginResponse {
   user: {
     id: number;
     fullName: string;
-    email: string;
+    email: string | null;
     username: string;
     companyId: number | null;
     roles: string[];
@@ -59,8 +59,8 @@ export function canAccess(user: LoginResponse['user'] | null, pageKey: string, a
   return Boolean(permission?.[action === 'view' ? 'canView' : action === 'create' ? 'canCreate' : action === 'update' ? 'canUpdate' : 'canDelete']);
 }
 
-export async function login(email: string, password: string) {
-  const { data } = await api.post<LoginResponse>('/auth/login', { email, password });
+export async function login(username: string, password: string) {
+  const { data } = await api.post<LoginResponse>('/auth/login', { username, password });
   localStorage.setItem('dns_access_token', data.accessToken);
   localStorage.setItem('dns_user', JSON.stringify(data.user));
   return data;

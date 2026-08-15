@@ -12,10 +12,10 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
   const [loading, setLoading] = useState(false);
   const [notificationApi, notificationContext] = notification.useNotification();
 
-  async function handleSubmit(values: { email: string; password: string }) {
+  async function handleSubmit(values: { username: string; password: string }) {
     setLoading(true);
     try {
-      await login(values.email, values.password);
+      await login(values.username, values.password);
       onAuthenticated();
     } catch {
       notificationApi.error({
