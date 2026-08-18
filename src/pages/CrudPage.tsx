@@ -893,9 +893,9 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
           }
         : activeTable === 't_factory_dispatch'
           ? {
-              factory_plant_id: 240,
+              factory_plant_id: 80,
               builty_number: 70,
-              vehicle_id: 135,
+              vehicle_id: 80,
               date: 105,
               weight_in_tons: 125,
               rate_per_ton: 95,
