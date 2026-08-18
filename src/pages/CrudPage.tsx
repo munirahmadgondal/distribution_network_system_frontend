@@ -893,7 +893,14 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
           }
         : activeTable === 't_factory_dispatch'
           ? {
-              factory_plant_id: 115,
+              factory_plant_id: 240,
+              builty_number: 70,
+              vehicle_id: 135,
+              date: 105,
+              weight_in_tons: 125,
+              rate_per_ton: 95,
+              rate_per_bag: 95,
+              applied_rate_per_bag: 125,
             }
         : {};
     const hiddenTableFields = new Set([
@@ -986,6 +993,7 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
         return [dataColumn, {
           title: 'No. of Bags',
           key: 'calculated_bags',
+          width: 72,
           render: (_: unknown, record: DataRecord) => (Number(record.weight_in_tons) * 20).toLocaleString('en-US', { maximumFractionDigits: 3 }),
         }];
       }
@@ -1046,6 +1054,7 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
       columns={columns}
       dataSource={rows}
       loading={loading}
+      tableLayout={activeTable === 't_factory_dispatch' ? 'fixed' : undefined}
       onChange={(_, __, sorter) => {
         if (activeTable !== 't_factory_dispatch' || Array.isArray(sorter) || !sorter.order) return;
         const nextOrder = sorter.order === 'ascend' ? 'ASC' : 'DESC';
