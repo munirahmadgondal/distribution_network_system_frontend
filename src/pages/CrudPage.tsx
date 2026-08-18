@@ -116,6 +116,7 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [dispatchDateOrder, setDispatchDateOrder] = useState<'ASC' | 'DESC'>('DESC');
   const [total, setTotal] = useState(0);
   const [relationOptions, setRelationOptions] = useState<Record<string, SelectOption[]>>({});
   const [destinationPlantOptions, setDestinationPlantOptions] = useState<SelectOption[]>([]);
@@ -228,12 +229,13 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
     setSearch('');
   }, [initialTable]);
 
-  async function loadRows(table = activeTable, requestedPage = page, query = search, requestedPageSize = pageSize) {
+  async function loadRows(table = activeTable, requestedPage = page, query = search, requestedPageSize = pageSize, requestedDateOrder = dispatchDateOrder) {
     if (!table) return;
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(requestedPage), limit: String(requestedPageSize) });
       if (query.trim()) params.set('search', query.trim());
+      if (table === 't_factory_dispatch') params.set('dateOrder', requestedDateOrder);
       const data = await getData<CrudResponse>(`/crud/${table}?${params}`);
       setRows(data.rows); setTotal(data.total);
     } catch (error) {
@@ -827,7 +829,7 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
       return <Select
         placeholder="Select Loading Capacity Unit"
         options={[
-          { value: 'Tons', label: 'Tons' },
+          { value: 'TONS', label: 'Tons' },
           { value: 'KG', label: 'KG' },
         ]}
       />;
@@ -889,6 +891,10 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
             released_at: 105,
             description: 150,
           }
+        : activeTable === 't_factory_dispatch'
+          ? {
+              factory_plant_id: 115,
+            }
         : {};
     const hiddenTableFields = new Set([
       'is_deleted',
@@ -920,7 +926,14 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
         : availableKeys.slice(0, 8);
     const dataColumns = keys.flatMap((key) => {
       const column = meta?.columns.find((item) => item.column_name === key);
-      const dataColumn = { title: activeTable === 'retailers' && key === 'city_name' ? 'City / Area' : activeTable === 'retailers' && key === 'opening_balance' ? 'Balance' : activeTable === 'factory_destination' && key === 'city_id' ? 'Destination City' : label(key, column), dataIndex: key, key, ellipsis: true, ...(compactColumnWidths[key] ? { width: compactColumnWidths[key] } : {}), render: (value: unknown, record: DataRecord) => {
+      const factoryDispatchTitles: Record<string, string> = {
+        builty_number: 'Bilty',
+        applied_rate_per_bag: 'App Rate / Bag',
+        rate_per_ton: 'Rate / Ton',
+        rate_per_bag: 'Rate / Bad',
+        factory_plant_id: 'Factory',
+      };
+      const dataColumn = { title: activeTable === 'retailers' && key === 'city_name' ? 'City / Area' : activeTable === 'retailers' && key === 'opening_balance' ? 'Balance' : activeTable === 'factory_destination' && key === 'city_id' ? 'Destination City' : activeTable === 't_factory_dispatch' && key === 'date' ? 'Date' : activeTable === 't_factory_dispatch' && factoryDispatchTitles[key] ? factoryDispatchTitles[key] : label(key, column), dataIndex: key, key, ellipsis: true, ...(compactColumnWidths[key] ? { width: compactColumnWidths[key] } : {}), render: (value: unknown, record: DataRecord) => {
         if (activeTable === 'retailers' && key === 'city_name') {
           return value ? `${String(value)}${record.city_area_name ? `: ${String(record.city_area_name)}` : ''}` : '-';
         }
@@ -964,7 +977,10 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
           return Number(value).toLocaleString('en-US', { maximumFractionDigits });
         }
         return typeof value === 'boolean' ? (value ? 'Yes' : 'No') : typeof value === 'object' ? JSON.stringify(value) : String(value);
-      } };
+      }, ...(activeTable === 't_factory_dispatch' && key === 'date' ? {
+        sorter: true,
+        sortOrder: dispatchDateOrder === 'ASC' ? 'ascend' as const : 'descend' as const,
+      } : {}) };
 
       if (activeTable === 't_factory_dispatch' && key === 'weight_in_tons') {
         return [dataColumn, {
@@ -991,7 +1007,7 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
         <Tooltip title="View audit information"><Button aria-label="View audit information" icon={<HistoryOutlined />} loading={auditLoading} onClick={() => openAuditInfo(record)} /></Tooltip>
       </Space>,
     }] : dataColumns;
-  }, [activeTable, rows, meta, primaryKey, relationOptions, canUpdate, canDelete, dispatchDetailLoading, retailerLedgerLoading, auditLoading, onView, onReceive, onLedger]);
+  }, [activeTable, rows, meta, primaryKey, relationOptions, canUpdate, canDelete, dispatchDateOrder, dispatchDetailLoading, retailerLedgerLoading, auditLoading, onView, onReceive, onLedger]);
 
   const content = <>
     <div className="crud-header">
@@ -1010,7 +1026,35 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
       onChange={(event) => setSearch(event.target.value)}
       onSearch={() => { setPage(1); loadRows(activeTable, 1); }}
     />
-    <Table rowKey={(record, index) => String(record[primaryKey] ?? index)} columns={columns} dataSource={rows} loading={loading} pagination={{
+    {activeTable === 't_factory_dispatch' && <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '14px 0 12px' }}>
+      <Radio.Group
+        size="small"
+        value={dispatchDateOrder}
+        onChange={(event) => {
+          const nextOrder = event.target.value as 'ASC' | 'DESC';
+          setDispatchDateOrder(nextOrder);
+          setPage(1);
+          loadRows(activeTable, 1, search, pageSize, nextOrder);
+        }}
+        optionType="button"
+        buttonStyle="solid"
+        options={[{ label: 'ASC Date', value: 'ASC' }, { label: 'DESC Date', value: 'DESC' }]}
+      />
+    </div>}
+    <Table
+      rowKey={(record, index) => String(record[primaryKey] ?? index)}
+      columns={columns}
+      dataSource={rows}
+      loading={loading}
+      onChange={(_, __, sorter) => {
+        if (activeTable !== 't_factory_dispatch' || Array.isArray(sorter) || !sorter.order) return;
+        const nextOrder = sorter.order === 'ascend' ? 'ASC' : 'DESC';
+        if (nextOrder === dispatchDateOrder) return;
+        setDispatchDateOrder(nextOrder);
+        setPage(1);
+        loadRows(activeTable, 1, search, pageSize, nextOrder);
+      }}
+      pagination={{
       current: page,
       pageSize,
       total,
