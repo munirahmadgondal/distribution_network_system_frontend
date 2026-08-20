@@ -233,6 +233,13 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
   }, [activeTable, form, isVehicleExpenseHead]);
 
   useEffect(() => {
+    if (activeTable !== 'expense_main' || !isVehicleExpenseHead) return;
+    getData<SelectOption[]>('/crud/vehicles/options')
+      .then((options) => setRelationOptions((current) => ({ ...current, vehicle_id: options })))
+      .catch(() => setRelationOptions((current) => ({ ...current, vehicle_id: [] })));
+  }, [activeTable, isVehicleExpenseHead]);
+
+  useEffect(() => {
     setActiveTable(initialTable);
     setSearch('');
   }, [initialTable]);
@@ -789,6 +796,15 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
     }
   }
   function field(column: ColumnMeta) {
+    if (activeTable === 'expense_main' && column.column_name === 'vehicle_id') {
+      return <Select
+        showSearch
+        allowClear
+        optionFilterProp="label"
+        placeholder="Select Vehicle"
+        options={relationOptions.vehicle_id || []}
+      />;
+    }
     if (column.foreign_table) {
       const options = activeTable === 'factory_destination' && column.column_name === 'factory_plant_id'
         ? destinationPlantOptions
