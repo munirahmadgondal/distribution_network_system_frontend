@@ -18,6 +18,7 @@ interface VehicleExpense {
 }
 
 interface VehicleExpenseReport { title: string; entries: VehicleExpense[] }
+interface VehicleOption { value: string; label: string }
 
 const money = (value: unknown) => Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 2 });
 const dateText = (value: string) => dayjs(value).format('DD-MMM-YYYY');
@@ -27,6 +28,7 @@ export function VehicleExpenseReportPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [vehicle, setVehicle] = useState<string>();
+  const [vehicleOptions, setVehicleOptions] = useState<VehicleOption[]>([]);
   const [from, setFrom] = useState<string>();
   const [to, setTo] = useState<string>();
   const [order, setOrder] = useState<'ASC' | 'DESC'>('DESC');
@@ -35,6 +37,9 @@ export function VehicleExpenseReportPage() {
     getData<VehicleExpenseReport>('/crud/reports/vehicle-expenses')
       .then(setData)
       .finally(() => setLoading(false));
+    getData<VehicleOption[]>('/crud/vehicles/options')
+      .then(setVehicleOptions)
+      .catch(() => setVehicleOptions([]));
   }, []);
 
   const rows = useMemo(() => {
@@ -42,7 +47,7 @@ export function VehicleExpenseReportPage() {
     const filtered = (data?.entries || []).filter((entry) => {
       const matchesDate = (!from || entry.date >= from) && (!to || entry.date <= to);
       const searchable = [entry.expense_head, entry.expense_sub_head, entry.title, entry.description].join(' ').toLowerCase();
-      return matchesDate && (!vehicle || entry.vehicle === vehicle) && (!query || searchable.includes(query));
+      return matchesDate && (!vehicle || entry.vehicle === vehicleOptions.find((option) => option.value === vehicle)?.label) && (!query || searchable.includes(query));
     });
     const direction = order === 'ASC' ? 1 : -1;
     const ordered = [...filtered].sort((a, b) =>
@@ -56,12 +61,9 @@ export function VehicleExpenseReportPage() {
       if (order === 'DESC') balance -= Number(entry.amount || 0);
       return { ...entry, debit: entry.amount, credit: '0', balance: currentBalance };
     });
-  }, [data, from, order, search, to, vehicle]);
+  }, [data, from, order, search, to, vehicle, vehicleOptions]);
 
   const total = rows.reduce((sum, entry) => sum + Number(entry.amount || 0), 0);
-  const vehicleOptions = useMemo(() => Array.from(new Set((data?.entries || []).filter((entry) => entry.vehicle_status === 'ACTIVE').map((entry) => entry.vehicle)))
-    .sort((a, b) => a.localeCompare(b))
-    .map((value) => ({ value, label: value })), [data]);
   const clear = () => { setVehicle(undefined); setSearch(''); setFrom(undefined); setTo(undefined); };
   const download = async () => {
     const XLSX = await import('xlsx');
