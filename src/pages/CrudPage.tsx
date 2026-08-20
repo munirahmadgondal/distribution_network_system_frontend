@@ -119,6 +119,7 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
   const [dispatchDateOrder, setDispatchDateOrder] = useState<'ASC' | 'DESC'>('DESC');
   const [total, setTotal] = useState(0);
   const [relationOptions, setRelationOptions] = useState<Record<string, SelectOption[]>>({});
+  const [selectedExpenseHeadName, setSelectedExpenseHeadName] = useState('');
   const [destinationPlantOptions, setDestinationPlantOptions] = useState<SelectOption[]>([]);
   const [vehicleCapacityTons, setVehicleCapacityTons] = useState<number | null>(null);
   const [factoryDispatchMaxBags, setFactoryDispatchMaxBags] = useState<number | null>(null);
@@ -167,8 +168,7 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
   const selectedExpenseHeadId = Form.useWatch('head_id', form);
   const selectedExpenseSubHeadId = Form.useWatch('subhead_id', form);
   const expensePaymentMode = Form.useWatch('payment_mode', form);
-  const selectedExpenseHead = relationOptions.head_id?.find((option) => option.value === String(selectedExpenseHeadId));
-  const isVehicleExpenseHead = selectedExpenseHead?.label.trim().toLowerCase() === 'vehicle';
+  const isVehicleExpenseHead = selectedExpenseHeadName.trim().toLowerCase() === 'vehicle';
   const calculatedBags = weightInTons !== undefined && weightInTons !== null && weightInTons !== '' && Number.isFinite(Number(weightInTons))
     ? Number(weightInTons) * 20
     : undefined;
@@ -227,10 +227,10 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
   }, [activeTable, selectedExpenseHeadId]);
 
   useEffect(() => {
-    if (activeTable === 'expense_main' && selectedExpenseHead && !isVehicleExpenseHead) {
+    if (activeTable === 'expense_main' && !isVehicleExpenseHead) {
       form.setFieldValue('vehicle_id', undefined);
     }
-  }, [activeTable, form, isVehicleExpenseHead, selectedExpenseHead]);
+  }, [activeTable, form, isVehicleExpenseHead]);
 
   useEffect(() => {
     setActiveTable(initialTable);
@@ -647,6 +647,7 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
   const formClassName = visibleFormColumns.length <= 2 ? 'record-form compact' : 'record-form';
   function openCreate() {
     setEditing(null); form.resetFields();
+    if (activeTable === 'expense_main') setSelectedExpenseHeadName('');
     writableColumns.forEach((column) => { if (column.data_type === 'boolean' && column.column_default?.includes('true')) form.setFieldValue(column.column_name, true); });
     if (activeTable === 'vehicles') {
       form.setFieldValue('owner_type', 'SELF');
@@ -674,6 +675,7 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
   }
   function openEdit(record: DataRecord) {
     setEditing(record); form.resetFields();
+    if (activeTable === 'expense_main') setSelectedExpenseHeadName(String(record.head_name || ''));
     const values: Record<string, unknown> = {};
     writableColumns.forEach((column) => { const value = record[column.column_name]; values[column.column_name] = column.data_type.includes('date') && value ? dayjs(String(value)) : value; });
     form.setFieldsValue(values);
@@ -802,7 +804,11 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
         onChange={activeTable === 'retailers' && column.column_name === 'city_id'
           ? () => form.setFieldValue('city_area_id', undefined)
           : activeTable === 'expense_main' && column.column_name === 'head_id'
-            ? () => form.setFieldValue('subhead_id', undefined)
+            ? (_value, option) => {
+                const selectedOption = Array.isArray(option) ? option[0] : option;
+                setSelectedExpenseHeadName(String(selectedOption?.label || ''));
+                form.setFieldsValue({ subhead_id: undefined, vehicle_id: undefined });
+              }
             : undefined}
       />;
     }
