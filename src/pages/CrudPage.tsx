@@ -533,6 +533,8 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
       try {
         const options = ['adjustment_main','expense_main'].includes(activeTable) && column.column_name === 'distributor_bank_account_id'
           ? await getData<SelectOption[]>('/crud/bank-account-options?receivingEnd=DISTRIBUTOR')
+          : activeTable === 'expense_main' && column.column_name === 'head_id'
+            ? await getData<SelectOption[]>('/crud/expense_head/options')
           : await getData<SelectOption[]>(`/crud/${column.foreign_table}/options`);
         return [column.column_name, options] as const;
       } catch {
@@ -1176,6 +1178,10 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
                   ? `Fare Amount: (Remaining: ${bankReceiptFareRemaining.toLocaleString('en-US', { maximumFractionDigits: 2 })})`
                 : activeTable === 't_bank_retailer_receipts' && column.column_name === 'cement_amount' && bankReceiptCementRemaining != null
                   ? `Cement Amount: (Remaining: ${bankReceiptCementRemaining.toLocaleString('en-US', { maximumFractionDigits: 2 })})`
+                : activeTable === 'expense_main' && column.column_name === 'head_id'
+                  ? 'Expense Head'
+                : activeTable === 'expense_main' && column.column_name === 'subhead_id'
+                  ? 'Expense Sub Head'
                 : label(column.column_name, column)}
               valuePropName={column.data_type === 'boolean' ? 'checked' : 'value'}
               rules={[
