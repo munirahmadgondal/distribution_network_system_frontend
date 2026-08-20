@@ -1,5 +1,5 @@
 import { ClearOutlined, DownloadOutlined, SearchOutlined } from '@ant-design/icons';
-import { Button, Card, DatePicker, Input, Radio, Select, Space, Table, Typography } from 'antd';
+import { Button, Card, DatePicker, Input, Radio, Select, Space, Table, Typography, message } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import { getData } from '../../services/api';
@@ -36,10 +36,11 @@ export function VehicleExpenseReportPage() {
   useEffect(() => {
     getData<VehicleExpenseReport>('/crud/reports/vehicle-expenses')
       .then(setData)
+      .catch(() => message.error('Vehicle expense data could not be loaded'))
       .finally(() => setLoading(false));
     getData<VehicleOption[]>('/crud/vehicles/options')
       .then(setVehicleOptions)
-      .catch(() => setVehicleOptions([]));
+      .catch(() => { setVehicleOptions([]); message.error('Active vehicles could not be loaded'); });
   }, []);
 
   const rows = useMemo(() => {
