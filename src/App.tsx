@@ -15,6 +15,8 @@ import { FactoryPlantLedgerPage } from './pages/configurations/FactoryPlantLedge
 import { BankAccountLedgerPage } from './pages/configurations/BankAccountLedgerPage';
 import { AccountsLedgerPage } from './pages/configurations/AccountsLedgerPage';
 import { EntityLedgerReportPage } from './pages/reports/EntityLedgerReportPage';
+import { VehicleExpenseReportPage } from './pages/reports/VehicleExpenseReportPage';
+import { ReceiptPaymentPage } from './pages/ReceiptPaymentPage';
 import { SideTruckIcon } from './components/atoms/SideTruckIcon';
 
 export default function App() {
@@ -52,6 +54,7 @@ export default function App() {
     const reportPaths: Record<string, string> = {
       'report:expenses': '/reports/expenses', 'report:income': '/reports/income',
       'report:retailers': '/reports/retailers', 'report:factory': '/reports/factory',
+      'report:vehicle-expenses': '/reports/vehicle-expenses',
     };
     if (reportPaths[key]) {
       setActiveKey(key);
@@ -116,6 +119,8 @@ export default function App() {
     >
       {activeKey === 'report:expenses' && canAccess(user, 'accounts:expense_main') ? (
         <AccountsLedgerPage kind="expenses" />
+      ) : activeKey === 'report:vehicle-expenses' && canAccess(user, 'accounts:expense_main') ? (
+        <VehicleExpenseReportPage />
       ) : activeKey === 'report:income' && canAccess(user, 'accounts:income_main') ? (
         <AccountsLedgerPage kind="income" />
       ) : activeKey === 'report:retailers' && canAccess(user, 'config:retailers') ? (
@@ -124,6 +129,8 @@ export default function App() {
         <EntityLedgerReportPage kind="factory" />
       ) : activeKey === 'transaction:retailer_dispatch:view' && canAccess(user, 'transaction:retailer_dispatch') ? (
         <RetailerDispatchAddPage viewDispatchId={retailerDispatchIdFromPath()} onBack={() => selectPage('transaction:retailer_dispatch')} />
+      ) : activeKey === 'transaction:receipt_payment' && canAccess(user, 'transaction:retailer_dispatch') ? (
+        <ReceiptPaymentPage />
       ) : activeKey === 'accounts:expense_main:ledger' && canAccess(user,'accounts:expense_main') ? (
         <AccountsLedgerPage kind="expenses" onBack={()=>selectPage('accounts:expense_main')}/>
       ) : activeKey === 'accounts:income_main:ledger' && canAccess(user,'accounts:income_main') ? (

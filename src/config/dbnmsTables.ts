@@ -26,6 +26,7 @@ export const dbnmsTablePages: DbnmsTablePage[] = [
   { key: 'accounts:adjustment_main', path: '/accounts/adjustments', table: 'adjustment_main', title: 'Adjustments', category: 'accounts' },
   { key: 'transaction:t_factory_dispatch', path: '/factory-dispatches', table: 't_factory_dispatch', title: 'Factory Dispatch', category: 'transaction' },
   { key: 'transaction:retailer_dispatch', path: '/retailer-dispatches', table: 'retailer_dispatch', title: 'Retailer Dispatch', category: 'transaction' },
+  { key: 'transaction:receipt_payment', path: '/receipt-payments', table: 'receipt_payment', title: 'Receipt & Payment', category: 'transaction' },
   { key: 'transaction:t_bank_retailer_receipts', path: '/bank-retailer-receipts', table: 't_bank_retailer_receipts', title: 'Bank Retailer Receipts', category: 'transaction' },
 ];
 
@@ -53,6 +54,7 @@ export function keyFromPath(pathname: string) {
   const normalizedPath = decodeURIComponent(pathname).replace(/\/+$/, '') || '/';
   const reportPaths: Record<string, string> = {
     '/reports/expenses': 'report:expenses',
+    '/reports/vehicle-expenses': 'report:vehicle-expenses',
     '/reports/income': 'report:income',
     '/reports/retailers': 'report:retailers',
     '/reports/factory': 'report:factory',

@@ -116,16 +116,18 @@ export function RetailerReceivingPage({ onBack }: { onBack: () => void }) {
     </Card>
     <Row gutter={[16, 16]}>
       <Col xs={24} lg={16}><Card title="Receive Cement Amount"><Form form={form} layout="vertical" initialValues={{ paymentMode: 'BANK' }} onFinish={submit}>
-        <Form.Item name="amount" label="Receiving Amount" rules={[{ required: true }, { type: 'number', min: 0.01 }]}><InputNumber min={0.01} style={{ width: '100%' }} /></Form.Item>
-        <Form.Item name="paymentMode" label="Payment Mode" rules={[{ required: true }]}><Radio.Group options={[{ label: 'Bank', value: 'BANK' }, { label: 'Cash', value: 'CASH' }]} /></Form.Item>
-        {paymentMode === 'BANK' && <>
-          <Form.Item name="bankAccountId" label="Bank Account" rules={[{ required: true }]}><Select showSearch optionFilterProp="label" options={accounts} /></Form.Item>
-          <Row gutter={16}>
-            <Col xs={24} sm={12}><Form.Item name="instrumentType" label="Instrument Type" rules={[{ required: true }]}><Select options={['CHEQUE', 'CASH', 'DRAFT', 'ONLINE'].map(value => ({ value, label: value[0] + value.slice(1).toLowerCase() }))} /></Form.Item></Col>
-            <Col xs={24} sm={12}><Form.Item name="instrumentNumber" label="Instrument Number"><Input /></Form.Item></Col>
-          </Row>
-        </>}
-        <Form.Item name="description" label="Description"><Input.TextArea rows={3} /></Form.Item>
+        <Row gutter={16}>
+          <Col xs={24} md={6}><Form.Item name="paymentMode" label="Payment Mode" rules={[{ required: true }]}><Radio.Group options={[{ label: 'Bank', value: 'BANK' }, { label: 'Cash', value: 'CASH' }]} /></Form.Item></Col>
+          {paymentMode === 'BANK' && <>
+            <Col xs={24} md={6}><Form.Item name="bankAccountId" label="Bank Account" rules={[{ required: true }]}><Select showSearch optionFilterProp="label" options={accounts} /></Form.Item></Col>
+            <Col xs={24} md={6}><Form.Item name="instrumentType" label="Instrument Type" rules={[{ required: true }]}><Select options={['CHEQUE', 'CASH', 'DRAFT', 'ONLINE'].map(value => ({ value, label: value[0] + value.slice(1).toLowerCase() }))} /></Form.Item></Col>
+            <Col xs={24} md={6}><Form.Item name="instrumentNumber" label="Instrument Number"><Input /></Form.Item></Col>
+          </>}
+        </Row>
+        <Row gutter={16}>
+          <Col xs={24} sm={12}><Form.Item name="amount" label="Receiving Amount" rules={[{ required: true }, { type: 'number', min: 0.01 }]}><InputNumber min={0.01} style={{ width: '100%' }} /></Form.Item></Col>
+          <Col xs={24} sm={12}><Form.Item name="description" label="Description"><Input.TextArea rows={3} /></Form.Item></Col>
+        </Row>
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button type="primary" htmlType="submit" loading={loading}>Receive Amount</Button>
         </div>

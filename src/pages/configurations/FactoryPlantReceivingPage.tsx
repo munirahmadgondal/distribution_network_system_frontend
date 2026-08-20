@@ -18,10 +18,17 @@ export function FactoryPlantReceivingPage({ onBack }: { onBack: () => void }) {
     <div className="crud-header retailer-dispatch-page-header"><div><div className="retailer-dispatch-title-row"><Button type="text" icon={<ArrowLeftOutlined/>} onClick={onBack}/><Typography.Title level={3}>{data?.plant.factory_name} - {data?.plant.plant_name}</Typography.Title></div><Typography.Text className="retailer-dispatch-subtitle">Record payments and review the factory plant balance.</Typography.Text></div></div>
     <Card title="Factory Plant Receiving" loading={!data}>{data&&<div className="builty-table-wrap"><table className="builty-info-table"><thead><tr><th>City</th><th>Total No. of Bilty</th><th>Total Dispatch Amount</th><th>Balance</th></tr></thead><tbody><tr><td className="metric-cell">{data.plant.city_name}</td><td className="metric-cell">{data.plant.total_builties}</td><td className="metric-cell">{Number(data.plant.total_dispatch_amount).toLocaleString()}</td><td className="metric-cell">{Number(data.plant.balance).toLocaleString()}</td></tr></tbody></table></div>}</Card>
     <Card title="Receive Payment"><Form form={form} layout="vertical">
-      <Form.Item name="amount" label="Payment Amount" rules={[{required:true},{type:'number',min:0.01}]}><InputNumber min={0.01} style={{width:'100%'}}/></Form.Item>
-      <Row gutter={16}><Col xs={24} sm={12}><Form.Item name="sourceBankAccountId" label="Source Bank Account" rules={[{required:true}]}><Select showSearch optionFilterProp="label" placeholder="Select personal or business account" options={sourceAccounts}/></Form.Item></Col><Col xs={24} sm={12}><Form.Item name="bankAccountId" label="Factory Bank Account" rules={[{required:true}]}><Select showSearch optionFilterProp="label" placeholder="Select factory account" options={factoryAccounts}/></Form.Item></Col></Row>
-      <Row gutter={16}><Col xs={24} sm={12}><Form.Item name="instrumentType" label="Instrument Type" rules={[{required:true}]}><Select options={['CHEQUE','CASH','DRAFT','ONLINE'].map(value=>({value,label:value[0]+value.slice(1).toLowerCase()}))}/></Form.Item></Col><Col xs={24} sm={12}><Form.Item name="instrumentNumber" label="Instrument Number"><Input/></Form.Item></Col></Row>
-      <Form.Item name="description" label="Description"><Input.TextArea rows={3}/></Form.Item><div style={{display:'flex',justifyContent:'flex-end'}}><Button type="primary" loading={saving} onClick={save}>Receive Payment</Button></div>
+      <Row gutter={16}>
+        <Col xs={24} md={8}><Form.Item name="amount" label="Payment Amount" rules={[{required:true},{type:'number',min:0.01}]}><InputNumber min={0.01} style={{width:'100%'}}/></Form.Item></Col>
+        <Col xs={24} md={8}><Form.Item name="sourceBankAccountId" label="Source Bank Account" rules={[{required:true}]}><Select showSearch optionFilterProp="label" placeholder="Select personal or business account" options={sourceAccounts}/></Form.Item></Col>
+        <Col xs={24} md={8}><Form.Item name="bankAccountId" label="Factory Bank Account" rules={[{required:true}]}><Select showSearch optionFilterProp="label" placeholder="Select factory account" options={factoryAccounts}/></Form.Item></Col>
+      </Row>
+      <Row gutter={16}>
+        <Col xs={24} md={8}><Form.Item name="instrumentType" label="Instrument Type" rules={[{required:true}]}><Select options={['CHEQUE','CASH','DRAFT','ONLINE'].map(value=>({value,label:value[0]+value.slice(1).toLowerCase()}))}/></Form.Item></Col>
+        <Col xs={24} md={8}><Form.Item name="instrumentNumber" label="Instrument Number"><Input/></Form.Item></Col>
+        <Col xs={24} md={8}><Form.Item name="description" label="Description"><Input.TextArea rows={3}/></Form.Item></Col>
+      </Row>
+      <div style={{display:'flex',justifyContent:'flex-end'}}><Button type="primary" loading={saving} onClick={save}>Receive Payment</Button></div>
     </Form></Card>
   </Space>;
 }

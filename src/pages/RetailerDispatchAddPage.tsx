@@ -1,5 +1,5 @@
 import { ArrowLeftOutlined, DeleteOutlined, PlusOutlined, PrinterOutlined, SaveOutlined } from '@ant-design/icons';
-import { Button, Card, Checkbox, Form, InputNumber, Result, Select, Space, Spin, Typography, message } from 'antd';
+import { Button, Card, Checkbox, DatePicker, Form, InputNumber, Result, Select, Space, Spin, Typography, message } from 'antd';
 import type { FormInstance } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
@@ -19,6 +19,7 @@ interface FactoryDispatch {
   amount: string | number;
 }
 interface DispatchEntryValues {
+  date?: dayjs.Dayjs;
   cityId?: string;
   retailerId?: string;
   noOfBags?: number;
@@ -37,7 +38,7 @@ interface DispatchFormValues { factoryDispatchId?: string; freightPerBag?: numbe
 interface DispatchDetail {
   dispatch: FactoryDispatch & { id: string; plant_name?: string };
   retailers: Array<{
-    city_id: string; retailer_id: string; no_of_bags: number; retailer_rate_per_bag: number;
+    date: string; city_id: string; retailer_id: string; no_of_bags: number; retailer_rate_per_bag: number;
     applied_rate_per_bag: number; fare_per_bag: number; fare_received: number;
     fare_paid_by_retailer_id?: string | null;
   }>;
@@ -120,6 +121,11 @@ function DispatchTableRow({
 
   return (
     <tr>
+      <td>
+        <Form.Item name={[index, 'date']} rules={[{ required: true, message: 'Date is required' }]}>
+          <DatePicker className="full-width" format="YYYY-MM-DD" disabled={disabled} />
+        </Form.Item>
+      </td>
       <td>
         <Form.Item name={[index, 'cityId']} rules={[{ required: true, message: 'City is required' }]}>
           <Select showSearch allowClear optionFilterProp="label" placeholder="Select City" options={cities} disabled={disabled} onChange={() => form.setFieldValue(['dispatches', index, 'retailerId'], undefined)} />
@@ -227,7 +233,7 @@ export function RetailerDispatchAddPage({ onBack, viewDispatchId }: { onBack: ()
           factoryDispatchId: String(detail.dispatch.id),
           freightPerBag: Number(first?.fare_per_bag || 0),
           dispatches: detail.retailers.map((row) => ({
-            cityId: String(row.city_id), retailerId: String(row.retailer_id), noOfBags: Number(row.no_of_bags),
+            date: dayjs(row.date), cityId: String(row.city_id), retailerId: String(row.retailer_id), noOfBags: Number(row.no_of_bags),
             ratePerBag: Number(row.retailer_rate_per_bag), appliedRatePerBag: Number(row.applied_rate_per_bag),
             farePerBag: Number(row.fare_per_bag || 0), fareReceived: Number(row.fare_received || 0),
             paidByAnotherRetailer: Boolean(row.fare_paid_by_retailer_id && String(row.fare_paid_by_retailer_id) !== String(row.retailer_id)),
@@ -278,7 +284,7 @@ export function RetailerDispatchAddPage({ onBack, viewDispatchId }: { onBack: ()
 
   return (
     <div className="retailer-dispatch-add-page">
-      <Form form={form} layout="vertical" initialValues={{ freightPerBag: 0, dispatches: [{ fareReceived: 0, farePerBag: 0 }] }}>
+      <Form form={form} layout="vertical" initialValues={{ freightPerBag: 0, dispatches: [{ date: dayjs(), fareReceived: 0, farePerBag: 0 }] }}>
         <div className="crud-header retailer-dispatch-page-header">
           <div>
             <div className="retailer-dispatch-title-row">
@@ -311,12 +317,12 @@ export function RetailerDispatchAddPage({ onBack, viewDispatchId }: { onBack: ()
             <div className="dispatch-input-table-wrap">
               <table className={`dispatch-input-table${readOnly ? ' dispatch-input-table-readonly' : ''}`}>
                 <thead><tr>
-                  <th>City</th><th>Retailer</th><th>Bags</th><th>Rate Per Bag</th><th>Applied Rate Per Bag</th><th>Fare Per Bag</th><th>Cement Per Bag</th><th>Total Cement</th><th>Total Fare</th><th>Fare Received</th><th>Fare Pending</th><th>Fare Paid By</th>{!readOnly && <th>Action</th>}
+                  <th>Date</th><th>City</th><th>Retailer</th><th>Bags</th><th>Rate Per Bag</th><th>Applied Rate Per Bag</th><th>Fare Per Bag</th><th>Cement Per Bag</th><th>Total Cement</th><th>Total Fare</th><th>Fare Received</th><th>Fare Pending</th><th>Fare Paid By</th>{!readOnly && <th>Action</th>}
                 </tr></thead>
                 <tbody>{fields.map((field, index) => <DispatchTableRow key={field.key} form={form} index={field.name} cities={cities} allRetailers={allRetailers} remainingBags={remainingBags} disabled={readOnly || !factoryDispatchId} hideAction={readOnly} removable={!readOnly && index > 0} onRemove={() => remove(field.name)} />)}</tbody>
               </table>
             </div>
-            {!readOnly && <Button className="add-dispatch-button" type="primary" icon={<PlusOutlined />} onClick={() => add({ fareReceived: 0, farePerBag: 0 })} disabled={!factoryDispatchId}>Add New Row</Button>}
+            {!readOnly && <Button className="add-dispatch-button" type="primary" icon={<PlusOutlined />} onClick={() => add({ date: dayjs(), fareReceived: 0, farePerBag: 0 })} disabled={!factoryDispatchId}>Add New Row</Button>}
           </Card>}
         </Form.List>
         <div className="dispatch-summary-table-wrap">

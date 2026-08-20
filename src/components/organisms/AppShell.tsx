@@ -32,6 +32,7 @@ const { Header, Sider, Content } = Layout;
 const transactionIcons: Record<string, ReactNode> = {
   t_factory_dispatch: <TruckOutlined />,
   retailer_dispatch: <SwapOutlined />,
+  receipt_payment: <CreditCardOutlined />,
   t_factory_order_payment: <DollarOutlined />,
   t_bank_retailer_receipts: <CreditCardOutlined />,
 };
@@ -62,7 +63,7 @@ interface AppShellProps {
 
 function menuItems(user: LoginResponse['user']): MenuProps['items'] { return [
   ...(canAccess(user, 'dashboard') ? [{ key: 'dashboard', icon: <BarChartOutlined />, label: 'Dashboard' }] : []),
-  ...transactionTablePages.filter((page) => page.table !== 't_bank_retailer_receipts' && canAccess(user, page.key)).map((page) => ({ key: page.key, icon: transactionIcons[page.table], label: page.title })),
+  ...transactionTablePages.filter((page) => page.table !== 't_bank_retailer_receipts' && canAccess(user, page.table === 'receipt_payment' ? 'transaction:retailer_dispatch' : page.key)).map((page) => ({ key: page.key, icon: transactionIcons[page.table], label: page.title })),
   {
     key: 'accounts-menu', icon: <DollarOutlined />, label: 'Accounts',
     children: accountsPages.filter((page) => canAccess(user, page.key)).map((page) => ({ key: page.key, icon: <DollarOutlined />, label: page.title })),
@@ -83,6 +84,7 @@ function menuItems(user: LoginResponse['user']): MenuProps['items'] { return [
     key: 'reports-menu', icon: <FileTextOutlined />, label: 'Reports',
     children: [
       ...(canAccess(user, 'accounts:expense_main') ? [{ key: 'report:expenses', icon: <DollarOutlined />, label: 'Expense' }] : []),
+      ...(canAccess(user, 'accounts:expense_main') ? [{ key: 'report:vehicle-expenses', icon: <CarOutlined />, label: 'Vehicle Expense' }] : []),
       ...(canAccess(user, 'accounts:income_main') ? [{ key: 'report:income', icon: <RiseOutlined />, label: 'Income' }] : []),
       ...(canAccess(user, 'config:retailers') ? [{ key: 'report:retailers', icon: <ShoppingOutlined />, label: 'Retailer' }] : []),
       ...(canAccess(user, 'config:factory_plant') ? [{ key: 'report:factory', icon: <ShopOutlined />, label: 'Factory' }] : []),

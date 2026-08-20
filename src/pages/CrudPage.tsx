@@ -167,6 +167,8 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
   const selectedExpenseHeadId = Form.useWatch('head_id', form);
   const selectedExpenseSubHeadId = Form.useWatch('subhead_id', form);
   const expensePaymentMode = Form.useWatch('payment_mode', form);
+  const selectedExpenseHead = relationOptions.head_id?.find((option) => option.value === String(selectedExpenseHeadId));
+  const isVehicleExpenseHead = selectedExpenseHead?.label.trim().toLowerCase() === 'vehicle';
   const calculatedBags = weightInTons !== undefined && weightInTons !== null && weightInTons !== '' && Number.isFinite(Number(weightInTons))
     ? Number(weightInTons) * 20
     : undefined;
@@ -223,6 +225,12 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
       .then((options) => setRelationOptions((current) => ({ ...current, subhead_id: options })))
       .catch((error) => message.error(errorText(error)));
   }, [activeTable, selectedExpenseHeadId]);
+
+  useEffect(() => {
+    if (activeTable === 'expense_main' && selectedExpenseHead && !isVehicleExpenseHead) {
+      form.setFieldValue('vehicle_id', undefined);
+    }
+  }, [activeTable, form, isVehicleExpenseHead, selectedExpenseHead]);
 
   useEffect(() => {
     setActiveTable(initialTable);
@@ -575,7 +583,7 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
     }
     if (activeTable === 'expense_main') {
       const byName = new Map(writableColumns.map((column) => [column.column_name, column]));
-      return ['head_id','subhead_id','title','amount','date','payment_mode','distributor_bank_account_id','instrument_type','instrument_number','description'].map((name)=>byName.get(name)).filter((column):column is ColumnMeta=>Boolean(column));
+      return ['head_id','subhead_id','title','amount','date','vehicle_id','payment_mode','distributor_bank_account_id','instrument_type','instrument_number','description'].map((name)=>byName.get(name)).filter((column):column is ColumnMeta=>Boolean(column));
     }
     if (activeTable === 'adjustment_main') {
       const byName = new Map(writableColumns.map((column) => [column.column_name, column]));
@@ -627,8 +635,11 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
         ? formColumns.filter((column) => column.column_name !== 'paid_by_retailer_id')
         : activeTable === 'adjustment_main'
           ? formColumns.filter((column) => column.column_name !== 'released_at')
-        : activeTable === 'expense_main' && expensePaymentMode !== 'BANK'
-          ? formColumns.filter((column) => !['distributor_bank_account_id','instrument_type','instrument_number'].includes(column.column_name))
+        : activeTable === 'expense_main'
+          ? formColumns.filter((column) => {
+              if (column.column_name === 'vehicle_id') return isVehicleExpenseHead;
+              return expensePaymentMode === 'BANK' || !['distributor_bank_account_id','instrument_type','instrument_number'].includes(column.column_name);
+            })
           : activeTable === 'distributor_bank_accounts' && bankAccountType === 'FACTORY'
             ? formColumns.filter((column) => !['opening_balance', 'opening_balance_date'].includes(column.column_name))
           : formColumns;
@@ -825,6 +836,24 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
         ]}
       />;
     }
+    if (activeTable === 'vehicles' && column.column_name === 'owner_type') {
+      return <Select
+        placeholder="Select Owner Type"
+        options={[
+          { value: 'OTHER', label: 'OTHER' },
+          { value: 'SELF', label: 'SELF' },
+        ]}
+      />;
+    }
+    if (activeTable === 'vehicles' && column.column_name === 'status') {
+      return <Select
+        placeholder="Select Status"
+        options={[
+          { value: 'ACTIVE', label: 'ACTIVE' },
+          { value: 'INACTIVE', label: 'INACTIVE' },
+        ]}
+      />;
+    }
     if (activeTable === 'vehicles' && column.column_name === 'loading_capacity_unit') {
       return <Select
         placeholder="Select Loading Capacity Unit"
@@ -871,6 +900,7 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
           title: 135,
           amount: 85,
           date: 95,
+          vehicle_name: 135,
           payment_mode: 95,
           distributor_bank_account_id: 115,
           instrument_type: 105,
@@ -910,7 +940,7 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
       ...(activeTable === 'designation' ? ['created_by', 'created_at', 'updated_by', 'updated_at'] : []),
       ...(activeTable === 'city_area' ? ['created_by', 'created_at', 'updated_by', 'updated_at'] : []),
       ...(['expense_head', 'expense_sub_head'].includes(activeTable) ? ['created_by', 'created_at', 'updated_by', 'updated_at'] : []),
-      ...(activeTable === 'expense_main' ? ['head_id', 'subhead_id', 'created_by', 'created_at', 'updated_by', 'updated_at'] : []),
+      ...(activeTable === 'expense_main' ? ['head_id', 'subhead_id', 'vehicle_id', 'created_by', 'created_at', 'updated_by', 'updated_at'] : []),
       ...(activeTable === 'income_main' ? ['income_head_id', 'factory_plant_id', 'created_by', 'created_at', 'updated_by', 'updated_at'] : []),
       ...(activeTable === 'income_heads' ? ['created_by', 'created_at', 'updated_by', 'updated_at'] : []),
       ...(activeTable === 'adjustment_heads' ? ['created_by', 'created_at', 'updated_by', 'updated_at'] : []),
@@ -963,6 +993,9 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
         if (activeTable === 'retailers' && key === 'balance') {
           return Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 2 });
         }
+        if (activeTable === 'vehicles' && record.owner_type === 'SELF' && ['owner_name', 'owner_contact'].includes(key)) {
+          return '-';
+        }
         if (activeTable === 'retailer_dispatch' && key === 'date') {
           return formatTableDate(value, 'date');
         }
@@ -972,10 +1005,10 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
         if (activeTable === 'adjustment_main' && key === 'is_released') {
           return value ? <Text type="success" strong>Released</Text> : <Text type="warning" strong>Unreleased</Text>;
         }
+        if (value == null) return '-';
         if (relationOptions[key]?.length) {
           return relationOptions[key].find((option) => option.value === String(value))?.label || String(value);
         }
-        if (value == null) return '-';
         if (column?.data_type === 'date' || column?.data_type.includes('timestamp')) {
           return formatTableDate(value, column.data_type);
         }
@@ -1010,8 +1043,8 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
         {activeTable === 'retailer_dispatch' && onView && <Tooltip title="Open bilty page"><Button aria-label="Open bilty page" icon={<ExportOutlined />} onClick={() => onView(record)} /></Tooltip>}
         {hasRetailerLedger && onReceive && (activeTable !== 'retailers' || record.status === 'ACTIVE') && <Tooltip title={activeTable === 'factory_plant' ? 'Add payment' : 'Add receiving'}><Button type="primary" ghost style={{ background: '#fff' }} aria-label={activeTable === 'factory_plant' ? 'Add payment' : 'Add receiving'} icon={<PlusOutlined />} onClick={() => onReceive(record)}>{activeTable === 'factory_plant' ? 'Add Payment' : 'Add Receivings'}</Button></Tooltip>}
         {hasRetailerLedger && <Tooltip title="View ledger"><Button icon={<BookOutlined />} loading={retailerLedgerLoading} onClick={() => onLedger ? onLedger(record) : openRetailerLedger(record)}>View Ledger</Button></Tooltip>}
-        {activeTable !== 'retailer_dispatch' && canUpdate && <Tooltip title="Edit record"><Button aria-label="Edit record" className="warning-action" icon={<EditOutlined />} onClick={() => openEdit(record)} /></Tooltip>}
-        {activeTable !== 'retailer_dispatch' && activeTable !== 'retailers' && canDelete && <Tooltip title="Delete record"><Popconfirm title="Delete this record?" description="Related business records may prevent deletion." onConfirm={() => remove(record)}><Button aria-label="Delete record" danger icon={<DeleteOutlined />} /></Popconfirm></Tooltip>}
+        {!['retailer_dispatch', 'expense_head'].includes(activeTable) && canUpdate && <Tooltip title="Edit record"><Button aria-label="Edit record" className="warning-action" icon={<EditOutlined />} onClick={() => openEdit(record)} /></Tooltip>}
+        {!['retailer_dispatch', 'retailers', 'expense_head'].includes(activeTable) && canDelete && <Tooltip title="Delete record"><Popconfirm title="Delete this record?" description="Related business records may prevent deletion." onConfirm={() => remove(record)}><Button aria-label="Delete record" danger icon={<DeleteOutlined />} /></Popconfirm></Tooltip>}
         <Tooltip title="View audit information"><Button aria-label="View audit information" icon={<HistoryOutlined />} loading={auditLoading} onClick={() => openAuditInfo(record)} /></Tooltip>
       </Space>,
     }] : dataColumns;
