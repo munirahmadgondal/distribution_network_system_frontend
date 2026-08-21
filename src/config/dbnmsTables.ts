@@ -36,7 +36,8 @@ export const rbasPages: DbnmsTablePage[] = [
 ];
 
 export const hrPages: DbnmsTablePage[] = [
-  { key: 'rbas:users', path: '/hr/employees', table: 'users', title: 'Employee', category: 'hr' },
+  { key: 'hr:employees', path: '/hr/employees', table: 'employees', title: 'Employees', category: 'hr' },
+  { key: 'rbas:users', path: '/hr/users', table: 'users', title: 'Users', category: 'hr' },
   { key: 'hr:designation', path: '/hr/designations', table: 'designation', title: 'Designation', category: 'hr' },
 ];
 
@@ -53,6 +54,7 @@ export function pageFromKey(key: string) {
 export function keyFromPath(pathname: string) {
   const normalizedPath = decodeURIComponent(pathname).replace(/\/+$/, '') || '/';
   const reportPaths: Record<string, string> = {
+    '/reports/general-overview': 'report:general-overview',
     '/reports/expenses': 'report:expenses',
     '/reports/vehicle-expenses': 'report:vehicle-expenses',
     '/reports/income': 'report:income',

@@ -62,7 +62,7 @@ const foreignTableLabels: Record<string, string> = {
   vehicles: 'Vehicle',
   t_factory_dispatch: 'Bilty Number',
 };
-const vehicleOwnerFields = new Set(['owner_name', 'owner_contact', 'owner_city', 'owner_address']);
+const vehicleOwnerFields = new Set(['owner_name', 'owner_contact']);
 const label = (key: string, column?: ColumnMeta): string => {
   if (key === 'builty_number') return 'Bilty Number';
   if (column?.foreign_table) {
@@ -375,8 +375,6 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
       form.setFieldsValue({
         owner_name: undefined,
         owner_contact: undefined,
-        owner_city: undefined,
-        owner_address: undefined,
       });
     }
   }, [activeTable, form, ownerType]);
@@ -603,7 +601,7 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
       const order = ['factory_plant_id', 'builty_number', 'vehicle_id', 'date', 'weight_in_tons', 'rate_per_ton', 'rate_per_bag', 'amount'];
       return [
         ...order.map((name) => byName.get(name)).filter((column): column is ColumnMeta => Boolean(column)),
-        ...writableColumns.filter((column) => !order.includes(column.column_name) && column.column_name !== 'applied_rate_per_bag'),
+        ...writableColumns.filter((column) => !order.includes(column.column_name) && !['applied_rate_per_bag', 'driver_id'].includes(column.column_name)),
       ];
     }
     if (activeTable === 'retailers') {
@@ -618,22 +616,19 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
 
     const byName = new Map(writableColumns.map((column) => [column.column_name, column]));
     const order = [
+      'reg_number',
       'make',
       'model',
-      'reg_number',
-      'loading_capacity_unit',
       'loading_capacity',
       'owner_type',
       'status',
       'owner_name',
       'owner_contact',
-      'owner_city',
-      'owner_address',
     ];
 
     return [
       ...order.map((name) => byName.get(name)).filter((column): column is ColumnMeta => Boolean(column)),
-      ...writableColumns.filter((column) => !order.includes(column.column_name) && column.column_name !== 'owner_id'),
+      ...writableColumns.filter((column) => !order.includes(column.column_name) && column.column_name !== 'loading_capacity_unit'),
     ];
   }, [activeTable, writableColumns]);
   const visibleFormColumns = activeTable === 'vehicles' && ownerType !== 'OTHER'
@@ -687,6 +682,9 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
     if (activeTable === 'expense_main') setSelectedExpenseHeadName(String(record.head_name || ''));
     const values: Record<string, unknown> = {};
     writableColumns.forEach((column) => { const value = record[column.column_name]; values[column.column_name] = column.data_type.includes('date') && value ? dayjs(String(value)) : value; });
+    if (activeTable === 'vehicles' && String(record.loading_capacity_unit).toUpperCase() === 'KG') {
+      values.loading_capacity = Number(record.loading_capacity) / 1000;
+    }
     form.setFieldsValue(values);
     if (activeTable === 'factory_destination' && record.factory_plant_id) {
       getData<DataRecord>(`/crud/factory_plant/${record.factory_plant_id}`).then((plant) => {
@@ -716,6 +714,7 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
       if (dayjs.isDayjs(value)) return [[key, column?.data_type === 'date' ? value.format('YYYY-MM-DD') : value.toISOString()]];
       return [[key, value]];
     }));
+    if (activeTable === 'vehicles') payload.loading_capacity_unit = 'TONS';
     if (activeTable === 't_bank_retailer_receipts') {
       payload.amount = (Number(values.fare_amount) || 0) + (Number(values.cement_amount) || 0);
       if (values.payment_mode === 'CASH') {
@@ -796,6 +795,9 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
     }
   }
   function field(column: ColumnMeta) {
+    if (activeTable === 'vehicles' && column.column_name === 'owner_name') {
+      return <Input placeholder="Enter Owner Name" />;
+    }
     if (activeTable === 'expense_main' && column.column_name === 'vehicle_id') {
       return <Select
         showSearch
@@ -970,16 +972,18 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
       ...(activeTable === 'adjustment_heads' ? ['created_by', 'created_at', 'updated_by', 'updated_at'] : []),
       ...(activeTable === 'adjustment_main' ? ['adjustment_head_id', 'factory_plant_id', 'is_released', 'created_by', 'created_at', 'updated_by', 'updated_at'] : []),
       ...(activeTable === 'retailers' ? ['city_id', 'city_area_id', 'city_area_name'] : []),
+      ...(activeTable === 'employees' ? ['designation_id', 'city_id', 'area_id'] : []),
       ...(activeTable === 'retailer_dispatch' ? ['factory_dispatch_id'] : []),
-      ...(activeTable === 'vehicles' ? ['owner_id'] : []),
     ]);
     const availableKeys = rows[0] ? Object.keys(rows[0]).filter((key) => !hiddenTableFields.has(key)) : [];
     const keys = activeTable === 'retailers'
       ? ['retailer_name', 'business_name', 'city_name', 'contact_number', 'balance', 'status'].filter((key) => availableKeys.includes(key))
+      : activeTable === 'employees'
+        ? ['name', 'email', 'mobile', 'cnic', 'date_of_joining', 'designation_name', 'city_name', 'area_name'].filter((key) => availableKeys.includes(key))
       : activeTable === 'vehicles'
-        ? ['make', 'model', 'reg_number', 'loading_capacity', 'loading_capacity_unit', 'owner_type', 'owner_name', 'owner_contact', 'status'].filter((key) => availableKeys.includes(key))
+        ? ['reg_number', 'make', 'model', 'loading_capacity', 'owner_type', 'owner_name', 'owner_contact', 'status'].filter((key) => availableKeys.includes(key))
         : activeTable === 'retailer_dispatch'
-          ? ['builty_number', 'date', 'retailer_count', 'total_bags', 'total_cement_amount', 'total_fare_amount', 'fare_received', 'fare_balance', 'grand_total'].filter((key) => availableKeys.includes(key))
+          ? ['vehicle_reg_number', 'builty_number', 'date', 'retailer_count', 'total_bags', 'total_cement_amount', 'total_fare_amount', 'fare_received', 'fare_balance', 'grand_total'].filter((key) => availableKeys.includes(key))
         : activeTable === 't_factory_dispatch'
           ? availableKeys.filter((key) => key !== 'created_at').slice(0, 8)
         : activeTable === 'factory_plant'
@@ -994,7 +998,10 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
         rate_per_bag: 'Rate / Bad',
         factory_plant_id: 'Factory',
       };
-      const dataColumn = { title: activeTable === 'retailers' && key === 'city_name' ? 'City / Area' : activeTable === 'retailers' && key === 'opening_balance' ? 'Balance' : activeTable === 'factory_destination' && key === 'city_id' ? 'Destination City' : activeTable === 't_factory_dispatch' && key === 'date' ? 'Date' : activeTable === 't_factory_dispatch' && factoryDispatchTitles[key] ? factoryDispatchTitles[key] : label(key, column), dataIndex: key, key, ellipsis: true, ...(compactColumnWidths[key] ? { width: compactColumnWidths[key] } : {}), render: (value: unknown, record: DataRecord) => {
+      const dataColumn = { title: activeTable === 'retailer_dispatch' && key === 'vehicle_reg_number' ? 'Vehicle' : activeTable === 'vehicles' && key === 'loading_capacity' ? 'Loading Capacity (Tons)' : activeTable === 'retailers' && key === 'city_name' ? 'City / Area' : activeTable === 'retailers' && key === 'opening_balance' ? 'Balance' : activeTable === 'factory_destination' && key === 'city_id' ? 'Destination City' : activeTable === 't_factory_dispatch' && key === 'date' ? 'Date' : activeTable === 't_factory_dispatch' && factoryDispatchTitles[key] ? factoryDispatchTitles[key] : label(key, column), dataIndex: key, key, ellipsis: true, ...(compactColumnWidths[key] ? { width: compactColumnWidths[key] } : {}), render: (value: unknown, record: DataRecord) => {
+        if (activeTable === 'vehicles' && key === 'loading_capacity' && String(record.loading_capacity_unit).toUpperCase() === 'KG') {
+          return Number(value) / 1000;
+        }
         if (activeTable === 'retailers' && key === 'city_name') {
           return value ? `${String(value)}${record.city_area_name ? `: ${String(record.city_area_name)}` : ''}` : '-';
         }
@@ -1154,10 +1161,13 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
           </div>
         )}
         {visibleFormColumns.flatMap((column) => [
+          ...(activeTable === 'vehicles' && column.column_name === 'owner_name'
+            ? [<div key="vehicle-owner-details-heading" className="form-section-start form-section-title vehicle-owner-details-heading">Owner Details</div>]
+            : []),
           <div
             key={column.column_name}
             className={[
-              vehicleOwnerFields.has(column.column_name) && column.column_name === 'owner_name' ? 'form-section-start' : '',
+              activeTable === 'vehicles' && column.column_name === 'owner_name' ? 'vehicle-owner-name' : '',
               activeTable === 't_bank_retailer_receipts' && column.column_name === 'payment_mode' ? 'receipt-payment-mode' : '',
               activeTable === 't_bank_retailer_receipts' && column.column_name === 'fare_amount' ? 'receipt-fare-amount' : '',
               activeTable === 't_bank_retailer_receipts' && column.column_name === 'cement_amount' ? 'receipt-cement-amount' : '',
@@ -1166,7 +1176,6 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
               activeTable === 'adjustment_main' && column.column_name === 'released_at' ? 'adjustment-release-date' : '',
             ].filter(Boolean).join(' ') || undefined}
           >
-            {vehicleOwnerFields.has(column.column_name) && column.column_name === 'owner_name' && <div className="form-section-title">Owner Details</div>}
             {activeTable === 'adjustment_main' && column.column_name === 'is_released' ? (
               <div className="adjustment-release-inline">
                 <Form.Item name="is_released" label="Is Released" valuePropName="checked">
@@ -1198,6 +1207,8 @@ export function CrudPage({ initialTable, title = 'Administration', description, 
                   ? 'Expense Head'
                 : activeTable === 'expense_main' && column.column_name === 'subhead_id'
                   ? 'Expense Sub Head'
+                : activeTable === 'vehicles' && column.column_name === 'loading_capacity'
+                  ? 'Loading Capacity (Tons)'
                 : label(column.column_name, column)}
               valuePropName={column.data_type === 'boolean' ? 'checked' : 'value'}
               rules={[

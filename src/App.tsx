@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AppShell } from './components/organisms/AppShell';
+import { AppShell, firstAccessibleMenuKey } from './components/organisms/AppShell';
 import { keyFromPath, pageFromKey } from './config/dbnmsTables';
 import { configurationPageComponents } from './pages/configurations';
 import { DashboardPage } from './pages/DashboardPage';
@@ -16,6 +16,7 @@ import { BankAccountLedgerPage } from './pages/configurations/BankAccountLedgerP
 import { AccountsLedgerPage } from './pages/configurations/AccountsLedgerPage';
 import { EntityLedgerReportPage } from './pages/reports/EntityLedgerReportPage';
 import { VehicleExpenseReportPage } from './pages/reports/VehicleExpenseReportPage';
+import { GeneralOverviewReportPage } from './pages/reports/GeneralOverviewReportPage';
 import { ReceiptPaymentPage } from './pages/ReceiptPaymentPage';
 import { SideTruckIcon } from './components/atoms/SideTruckIcon';
 
@@ -36,12 +37,22 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  useEffect(() => {
+    if (!user || activeKey !== 'dashboard' || canAccess(user, 'dashboard')) return;
+    const fallbackKey = firstAccessibleMenuKey(user);
+    if (!fallbackKey || fallbackKey === 'dashboard') return;
+    setActiveKey(fallbackKey);
+    window.history.replaceState(null, '', pathForKey(fallbackKey));
+  }, [activeKey, user]);
+
   if (!user) {
     return <LoginPage onAuthenticated={() => {
-      window.history.replaceState(null, '', '/');
-      setActiveKey('dashboard');
-      setShowDashboardTransition(true);
-      setUser(getStoredUser());
+      const authenticatedUser = getStoredUser();
+      const firstKey = authenticatedUser ? firstAccessibleMenuKey(authenticatedUser) || 'dashboard' : 'dashboard';
+      window.history.replaceState(null, '', pathForKey(firstKey));
+      setActiveKey(firstKey);
+      setShowDashboardTransition(firstKey === 'dashboard');
+      setUser(authenticatedUser);
     }} />;
   }
 
@@ -51,14 +62,9 @@ export default function App() {
 
   function selectPage(key: string) {
     if (key === 'dashboard' && activeKey !== 'dashboard') setShowDashboardTransition(true);
-    const reportPaths: Record<string, string> = {
-      'report:expenses': '/reports/expenses', 'report:income': '/reports/income',
-      'report:retailers': '/reports/retailers', 'report:factory': '/reports/factory',
-      'report:vehicle-expenses': '/reports/vehicle-expenses',
-    };
-    if (reportPaths[key]) {
+    if (key.startsWith('report:')) {
       setActiveKey(key);
-      window.history.pushState(null, '', reportPaths[key]);
+      window.history.pushState(null, '', pathForKey(key));
       return;
     }
     const nextPage = pageFromKey(key);
@@ -117,15 +123,17 @@ export default function App() {
         setUser(null);
       }}
     >
-      {activeKey === 'report:expenses' && canAccess(user, 'accounts:expense_main') ? (
+      {activeKey === 'report:general-overview' && canAccess(user, 'report:general-overview') ? (
+        <GeneralOverviewReportPage />
+      ) : activeKey === 'report:expenses' && canAccess(user, 'report:expenses') ? (
         <AccountsLedgerPage kind="expenses" />
-      ) : activeKey === 'report:vehicle-expenses' && canAccess(user, 'accounts:expense_main') ? (
+      ) : activeKey === 'report:vehicle-expenses' && canAccess(user, 'report:vehicle-expenses') ? (
         <VehicleExpenseReportPage />
-      ) : activeKey === 'report:income' && canAccess(user, 'accounts:income_main') ? (
+      ) : activeKey === 'report:income' && canAccess(user, 'report:income') ? (
         <AccountsLedgerPage kind="income" />
-      ) : activeKey === 'report:retailers' && canAccess(user, 'config:retailers') ? (
+      ) : activeKey === 'report:retailers' && canAccess(user, 'report:retailers') ? (
         <EntityLedgerReportPage kind="retailer" />
-      ) : activeKey === 'report:factory' && canAccess(user, 'config:factory_plant') ? (
+      ) : activeKey === 'report:factory' && canAccess(user, 'report:factory') ? (
         <EntityLedgerReportPage kind="factory" />
       ) : activeKey === 'transaction:retailer_dispatch:view' && canAccess(user, 'transaction:retailer_dispatch') ? (
         <RetailerDispatchAddPage viewDispatchId={retailerDispatchIdFromPath()} onBack={() => selectPage('transaction:retailer_dispatch')} />
@@ -171,4 +179,16 @@ export default function App() {
     )}
     </>
   );
+}
+
+function pathForKey(key: string) {
+  const reportPaths: Record<string, string> = {
+    'report:general-overview': '/reports/general-overview',
+    'report:expenses': '/reports/expenses',
+    'report:income': '/reports/income',
+    'report:retailers': '/reports/retailers',
+    'report:factory': '/reports/factory',
+    'report:vehicle-expenses': '/reports/vehicle-expenses',
+  };
+  return reportPaths[key] || pageFromKey(key)?.path || '/';
 }

@@ -1,5 +1,6 @@
 import { ArrowLeftOutlined, DollarOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Form, Input, InputNumber, Modal, Radio, Row, Select, Space, Table, Typography, message } from 'antd';
+import { Button, Card, Col, DatePicker, Form, Input, InputNumber, Modal, Radio, Row, Select, Space, Table, Typography, message } from 'antd';
+import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { getData, postData } from '../../services/api';
 
@@ -20,14 +21,19 @@ export function RetailerReceivingPage({ onBack }: { onBack: () => void }) {
   const [data, setData] = useState<ReceivingData>();
   const [retailerNotFound, setRetailerNotFound] = useState(!retailerId);
   const [accounts, setAccounts] = useState<Option[]>([]);
+  const [designations, setDesignations] = useState<Option[]>([]);
+  const [employees, setEmployees] = useState<Option[]>([]);
+  const [fareEmployees, setFareEmployees] = useState<Option[]>([]);
   const [loading, setLoading] = useState(false);
   const [fareToReceive, setFareToReceive] = useState<ReceivingData['fareBuilties'][number] | null>(null);
   const [fareReceiving, setFareReceiving] = useState(false);
   const [form] = Form.useForm();
-  const [fareForm] = Form.useForm<{ amount: number; paymentMode: 'BANK'|'CASH'; bankAccountId?: string; instrumentType?: string; instrumentNumber?: string }>();
+  const [fareForm] = Form.useForm<{ amount: number; receivingDate: dayjs.Dayjs; paymentMode: 'BANK'|'CASH'; bankAccountId?: string; instrumentType?: string; instrumentNumber?: string; designationId?: string; employeeId?: string }>();
   const receivingFareAmount = Form.useWatch('amount', fareForm);
   const farePaymentMode = Form.useWatch('paymentMode', fareForm);
+  const fareDesignationId = Form.useWatch('designationId', fareForm);
   const paymentMode = Form.useWatch('paymentMode', form);
+  const designationId = Form.useWatch('designationId', form);
   const receivingCementAmount = Form.useWatch('amount', form);
 
   async function load() {
@@ -45,13 +51,38 @@ export function RetailerReceivingPage({ onBack }: { onBack: () => void }) {
     void load();
     getData<Option[]>('/crud/bank-account-options?receivingEnd=DISTRIBUTOR')
       .then(setAccounts).catch(() => setAccounts([]));
+    getData<Option[]>('/crud/designation/options')
+      .then(setDesignations).catch(() => setDesignations([]));
   }, [retailerId]);
+
+  useEffect(() => {
+    if (paymentMode !== 'CASH' || !designationId) {
+      setEmployees([]);
+      form.setFieldValue('employeeId', undefined);
+      return;
+    }
+    getData<Option[]>(`/crud/employee-options?designationId=${encodeURIComponent(String(designationId))}`)
+      .then(setEmployees).catch(() => setEmployees([]));
+  }, [designationId, form, paymentMode]);
+
+  useEffect(() => {
+    if (farePaymentMode !== 'CASH' || !fareDesignationId) {
+      setFareEmployees([]);
+      fareForm.setFieldValue('employeeId', undefined);
+      return;
+    }
+    getData<Option[]>(`/crud/employee-options?designationId=${encodeURIComponent(String(fareDesignationId))}`)
+      .then(setFareEmployees).catch(() => setFareEmployees([]));
+  }, [fareDesignationId, fareForm, farePaymentMode]);
 
   async function submit() {
     const values = await form.validateFields(); setLoading(true);
     try {
-      await postData(`/crud/retailer-receiving/${retailerId}/cement`, values);
-      message.success('Cement payment received and allocated FIFO'); form.resetFields(); form.setFieldValue('paymentMode', 'BANK'); await load();
+      await postData(`/crud/retailer-receiving/${retailerId}/cement`, {
+        ...values,
+        receivingDate: values.receivingDate.format('YYYY-MM-DD'),
+      });
+      message.success('Cement payment received and allocated FIFO'); form.resetFields(); form.setFieldsValue({ paymentMode: 'BANK', receivingDate: dayjs() }); await load();
     } catch (error: any) { message.error(error.response?.data?.message || 'Payment could not be saved'); } finally { setLoading(false); }
   }
   async function confirmFareReceipt() {
@@ -59,7 +90,10 @@ export function RetailerReceivingPage({ onBack }: { onBack: () => void }) {
     const values = await fareForm.validateFields();
     setFareReceiving(true);
     try {
-      await postData(`/crud/retailer-receiving/dispatch/${fareToReceive.id}/fare`, values);
+      await postData(`/crud/retailer-receiving/dispatch/${fareToReceive.id}/fare`, {
+        ...values,
+        receivingDate: values.receivingDate.format('YYYY-MM-DD'),
+      });
       message.success('Fare marked as received');
       setFareToReceive(null);
       await load();
@@ -71,7 +105,7 @@ export function RetailerReceivingPage({ onBack }: { onBack: () => void }) {
   }
   function openFareReceipt(row: ReceivingData['fareBuilties'][number]) {
     fareForm.resetFields();
-    fareForm.setFieldValue('paymentMode','BANK');
+    fareForm.setFieldsValue({paymentMode:'BANK',receivingDate:dayjs()});
     setFareToReceive(row);
   }
 
@@ -115,18 +149,23 @@ export function RetailerReceivingPage({ onBack }: { onBack: () => void }) {
       </div>}
     </Card>
     <Row gutter={[16, 16]}>
-      <Col xs={24} lg={16}><Card title="Receive Cement Amount"><Form form={form} layout="vertical" initialValues={{ paymentMode: 'BANK' }} onFinish={submit}>
+      <Col xs={24} lg={16}><Card title="Receive Cement Amount"><Form form={form} layout="vertical" initialValues={{ paymentMode: 'BANK', receivingDate: dayjs() }} onFinish={submit}>
         <Row gutter={16}>
-          <Col xs={24} md={6}><Form.Item name="paymentMode" label="Payment Mode" rules={[{ required: true }]}><Radio.Group options={[{ label: 'Bank', value: 'BANK' }, { label: 'Cash', value: 'CASH' }]} /></Form.Item></Col>
+          <Col xs={24} md={6}><Form.Item name="paymentMode" label="Payment Mode" rules={[{ required: true }]}><Radio.Group onChange={() => form.setFieldsValue({ bankAccountId: undefined, instrumentType: undefined, instrumentNumber: undefined, designationId: undefined, employeeId: undefined })} options={[{ label: 'Bank', value: 'BANK' }, { label: 'Cash', value: 'CASH' }]} /></Form.Item></Col>
           {paymentMode === 'BANK' && <>
             <Col xs={24} md={6}><Form.Item name="bankAccountId" label="Bank Account" rules={[{ required: true }]}><Select showSearch optionFilterProp="label" options={accounts} /></Form.Item></Col>
             <Col xs={24} md={6}><Form.Item name="instrumentType" label="Instrument Type" rules={[{ required: true }]}><Select options={['CHEQUE', 'CASH', 'DRAFT', 'ONLINE'].map(value => ({ value, label: value[0] + value.slice(1).toLowerCase() }))} /></Form.Item></Col>
             <Col xs={24} md={6}><Form.Item name="instrumentNumber" label="Instrument Number"><Input /></Form.Item></Col>
           </>}
+          {paymentMode === 'CASH' && <>
+            <Col xs={24} md={9}><Form.Item name="designationId" label="Designation" rules={[{ required: true, message: 'Designation is required' }]}><Select showSearch optionFilterProp="label" options={designations} onChange={() => form.setFieldValue('employeeId', undefined)} /></Form.Item></Col>
+            <Col xs={24} md={9}><Form.Item name="employeeId" label="Receiver (Employee)" rules={[{ required: true, message: 'Receiver is required' }]}><Select showSearch optionFilterProp="label" options={employees} disabled={!designationId} /></Form.Item></Col>
+          </>}
         </Row>
         <Row gutter={16}>
-          <Col xs={24} sm={12}><Form.Item name="amount" label="Receiving Amount" rules={[{ required: true }, { type: 'number', min: 0.01 }]}><InputNumber min={0.01} style={{ width: '100%' }} /></Form.Item></Col>
-          <Col xs={24} sm={12}><Form.Item name="description" label="Description"><Input.TextArea rows={3} /></Form.Item></Col>
+          <Col xs={24} md={8}><Form.Item name="amount" label="Receiving Amount" rules={[{ required: true }, { type: 'number', min: 0.01 }]}><InputNumber min={0.01} style={{ width: '100%' }} /></Form.Item></Col>
+          <Col xs={24} md={8}><Form.Item name="receivingDate" label="Receiving Date" rules={[{ required: true, message: 'Receiving Date is required' }]}><DatePicker format="YYYY-MM-DD" allowClear={false} style={{ width: '100%' }} /></Form.Item></Col>
+          <Col xs={24} md={8}><Form.Item name="description" label="Description"><Input.TextArea rows={3} /></Form.Item></Col>
         </Row>
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button type="primary" htmlType="submit" loading={loading}>Receive Amount</Button>
@@ -155,13 +194,16 @@ export function RetailerReceivingPage({ onBack }: { onBack: () => void }) {
           <Col span={8}><Form.Item label="Total Fare"><Input value={Number(fareToReceive.total_fare_amount).toLocaleString()} disabled /></Form.Item></Col>
           <Col span={8}><Form.Item label="Remaining Fare"><InputNumber value={Math.max(Number(fareToReceive.pending_amount) - (Number(receivingFareAmount) || 0), 0)} formatter={(value) => Number(value || 0).toLocaleString()} controls={false} disabled style={{ width: '100%' }} /></Form.Item></Col>
         </Row>
-        <Form.Item name="amount" label="Receiving Fare" rules={[
-          { required: true, message: 'Receiving Fare is required' },
-          { type: 'number', min: 0.01, max: Number(fareToReceive.pending_amount), message: `Amount must be between 0.01 and ${Number(fareToReceive.pending_amount).toLocaleString()}` },
-        ]}>
-          <InputNumber min={0.01} max={Number(fareToReceive.pending_amount)} style={{ width: '100%' }} />
-        </Form.Item>
-        <Form.Item name="paymentMode" label="Payment Mode" rules={[{required:true}]}><Radio.Group options={[{label:'Bank',value:'BANK'},{label:'Cash',value:'CASH'}]} /></Form.Item>
+        <Row gutter={16}>
+          <Col span={12}><Form.Item name="amount" label="Receiving Fare" rules={[
+            { required: true, message: 'Receiving Fare is required' },
+            { type: 'number', min: 0.01, max: Number(fareToReceive.pending_amount), message: `Amount must be between 0.01 and ${Number(fareToReceive.pending_amount).toLocaleString()}` },
+          ]}>
+            <InputNumber min={0.01} max={Number(fareToReceive.pending_amount)} style={{ width: '100%' }} />
+          </Form.Item></Col>
+          <Col span={12}><Form.Item name="receivingDate" label="Receiving Date" rules={[{required:true,message:'Receiving Date is required'}]}><DatePicker format="YYYY-MM-DD" allowClear={false} style={{width:'100%'}}/></Form.Item></Col>
+        </Row>
+        <Form.Item name="paymentMode" label="Payment Mode" rules={[{required:true}]}><Radio.Group onChange={() => fareForm.setFieldsValue({bankAccountId:undefined,instrumentType:undefined,instrumentNumber:undefined,designationId:undefined,employeeId:undefined})} options={[{label:'Bank',value:'BANK'},{label:'Cash',value:'CASH'}]} /></Form.Item>
         {farePaymentMode==='BANK'&&<>
           <Form.Item name="bankAccountId" label="Bank Account" rules={[{required:true,message:'Bank Account is required'}]}><Select showSearch optionFilterProp="label" options={accounts}/></Form.Item>
           <Row gutter={16}>
@@ -169,6 +211,10 @@ export function RetailerReceivingPage({ onBack }: { onBack: () => void }) {
             <Col span={12}><Form.Item name="instrumentNumber" label="Instrument Number"><Input/></Form.Item></Col>
           </Row>
         </>}
+        {farePaymentMode==='CASH'&&<Row gutter={16}>
+          <Col span={12}><Form.Item name="designationId" label="Designation" rules={[{required:true,message:'Designation is required'}]}><Select showSearch optionFilterProp="label" options={designations} onChange={()=>fareForm.setFieldValue('employeeId',undefined)}/></Form.Item></Col>
+          <Col span={12}><Form.Item name="employeeId" label="Receiver (Employee)" rules={[{required:true,message:'Receiver is required'}]}><Select showSearch optionFilterProp="label" options={fareEmployees} disabled={!fareDesignationId}/></Form.Item></Col>
+        </Row>}
       </Form>}
     </Modal>
   </Space>;

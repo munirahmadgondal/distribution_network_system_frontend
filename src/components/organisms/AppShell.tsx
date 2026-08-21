@@ -83,11 +83,12 @@ function menuItems(user: LoginResponse['user']): MenuProps['items'] { return [
   {
     key: 'reports-menu', icon: <FileTextOutlined />, label: 'Reports',
     children: [
-      ...(canAccess(user, 'accounts:expense_main') ? [{ key: 'report:expenses', icon: <DollarOutlined />, label: 'Expense' }] : []),
-      ...(canAccess(user, 'accounts:expense_main') ? [{ key: 'report:vehicle-expenses', icon: <CarOutlined />, label: 'Vehicle Expense' }] : []),
-      ...(canAccess(user, 'accounts:income_main') ? [{ key: 'report:income', icon: <RiseOutlined />, label: 'Income' }] : []),
-      ...(canAccess(user, 'config:retailers') ? [{ key: 'report:retailers', icon: <ShoppingOutlined />, label: 'Retailer' }] : []),
-      ...(canAccess(user, 'config:factory_plant') ? [{ key: 'report:factory', icon: <ShopOutlined />, label: 'Factory' }] : []),
+      ...(canAccess(user, 'report:general-overview') ? [{ key: 'report:general-overview', icon: <BarChartOutlined />, label: 'General Overview' }] : []),
+      ...(canAccess(user, 'report:expenses') ? [{ key: 'report:expenses', icon: <DollarOutlined />, label: 'Expense' }] : []),
+      ...(canAccess(user, 'report:vehicle-expenses') ? [{ key: 'report:vehicle-expenses', icon: <CarOutlined />, label: 'Vehicle Expense' }] : []),
+      ...(canAccess(user, 'report:income') ? [{ key: 'report:income', icon: <RiseOutlined />, label: 'Income' }] : []),
+      ...(canAccess(user, 'report:retailers') ? [{ key: 'report:retailers', icon: <ShoppingOutlined />, label: 'Retailer' }] : []),
+      ...(canAccess(user, 'report:factory') ? [{ key: 'report:factory', icon: <ShopOutlined />, label: 'Factory' }] : []),
     ],
   },
   {
@@ -99,6 +100,12 @@ function menuItems(user: LoginResponse['user']): MenuProps['items'] { return [
     })),
   },
 ].filter((item: any) => !item.children || item.children.length > 0); }
+
+export function firstAccessibleMenuKey(user: LoginResponse['user']): string | undefined {
+  const firstItem = menuItems(user)?.[0] as { key?: React.Key; children?: Array<{ key?: React.Key }> } | undefined;
+  if (!firstItem) return undefined;
+  return String(firstItem.children?.[0]?.key ?? firstItem.key ?? '') || undefined;
+}
 
 const submenuKeys = ['accounts-menu', 'configurations-menu', 'hr-menu', 'reports-menu', 'rbas-menu'];
 
